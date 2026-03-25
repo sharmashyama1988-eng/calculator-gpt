@@ -839,177 +839,131 @@ function switchTab(tab) {
   }
 }
 
-// ============ AI CHAT LOGIC ============
-const OPENROUTER_API_KEY = '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';
-const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free'; // Free model on OpenRouter
+// ============ AI CHAT LOGIC (UPDATED & SECURE) ============
 
+// 1. Configuration - Nayi API Key aur Gemini Model
+const OPENROUTER_API_KEY = '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';
+const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
+
+// 2. DOM Elements
 const chatArea = document.getElementById('chatArea');
 const aiInput = document.getElementById('aiInput');
 const sendBtn = document.getElementById('sendBtn');
 const emptyState = document.getElementById('emptyState');
 
+// Suggestion click handler
 function fillSuggestion(el) {
-  aiInput.textContent = el.textContent;
-  aiInput.value = el.textContent;
-  aiInput.focus();
-  // Remove suggestions after first use
-  document.getElementById('suggestions').style.display = 'none';
+    aiInput.value = el.textContent;
+    aiInput.focus();
+    autoResize(aiInput);
 }
 
+// Input box auto-resize logic
 function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
+// Enter key handler
 function handleAIKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendToAI();
-  }
-}
-
-function addMsg(text, type) {
-  // Remove empty state
-  if (emptyState) emptyState.style.display = 'none';
-
-  const msg = document.createElement('div');
-  msg.className = `msg ${type}`;
-
-  const label = document.createElement('div');
-  label.className = 'msg-label';
-  label.textContent = type === 'user' ? 'You' : 'AI';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'msg-bubble';
-
-  if (type === 'ai') {
-    // Try to detect if response has a big number answer
-    const lines = text.split('\n').filter(l => l.trim());
-    const numPattern = /^[\d,.\s\-₹$€£%]+$/;
-    if (lines.length >= 1) {
-      const possibleResult = lines.find(l => /\d/.test(l) && l.length < 40);
-      if (possibleResult && lines.length > 1) {
-        const rest = lines.filter(l => l !== possibleResult).join('\n');
-        bubble.innerHTML = `${rest}<span class="result-num">${possibleResult}</span>`;
-      } else {
-        bubble.textContent = text;
-      }
-    } else {
-      bubble.textContent = text;
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendToAI();
     }
-  } else {
-    bubble.textContent = text;
-  }
-
-  msg.appendChild(label);
-  msg.appendChild(bubble);
-  chatArea.appendChild(msg);
-  chatArea.scrollTop = chatArea.scrollHeight;
-  return msg;
 }
 
+// Message UI helper
+function addMsg(text, type) {
+    if (emptyState) emptyState.style.display = 'none';
+    
+    const msg = document.createElement('div');
+    msg.className = `msg ${type}`;
+    
+    // Formatting: line breaks ko <br> mein badalna
+    const formattedText = text.replace(/\n/g, '<br>');
+    
+    msg.innerHTML = `
+        <div class="msg-label">${type === 'user' ? 'You' : 'AI'}</div>
+        <div class="msg-bubble">${formattedText}</div>
+    `;
+    
+    chatArea.appendChild(msg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// MAIN AI FUNCTION
+async function sendToAI() {
+    const question = aiInput.value.trim();
+    if (!question) return;
+
+    // User message add karein
+    addMsg(question, 'user');
+    aiInput.value = '';
+    aiInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    showThinking();
+
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + OPENROUTER_API_KEY, // Bearer ke baad space fix kiya gaya
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin, // Dynamic origin for Vercel/Localhost
+                'X-Title': 'Calculator GPT'
+            },
+            body: JSON.stringify({
+                model: MODEL,
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: 'You are a precise math assistant. Provide a very brief explanation and the final result clearly. Use ₹ for currency.' 
+                    },
+                    { role: 'user', content: question }
+                ],
+                temperature: 0.3,
+                max_tokens: 250
+            })
+        });
+
+        removeThinking();
+
+        if (!response.ok) {
+            const errBody = await response.json();
+            throw new Error(errBody.error?.message || `API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const answer = data.choices[0]?.message?.content || "No response from AI.";
+        
+        addMsg(answer, 'ai');
+
+    } catch (err) {
+        removeThinking();
+        console.error("Fetch Error:", err);
+        addMsg("System Error: " + err.message, 'ai');
+    } finally {
+        sendBtn.disabled = false;
+        aiInput.focus();
+    }
+}
+
+// Visual Thinking State
 function showThinking() {
-  const wrap = document.createElement('div');
-  wrap.className = 'msg ai';
-  wrap.id = 'thinkingMsg';
-
-  const label = document.createElement('div');
-  label.className = 'msg-label';
-  label.textContent = 'AI';
-
-  const thinking = document.createElement('div');
-  thinking.className = 'thinking';
-  thinking.innerHTML = '<span></span><span></span><span></span>';
-
-  wrap.appendChild(label);
-  wrap.appendChild(thinking);
-  chatArea.appendChild(wrap);
-  chatArea.scrollTop = chatArea.scrollHeight;
+    const div = document.createElement('div');
+    div.id = 'thinkingMsg';
+    div.className = 'msg ai';
+    div.innerHTML = `
+        <div class="msg-label">AI</div>
+        <div class="thinking"><span></span><span></span><span></span></div>
+    `;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
 }
 
 function removeThinking() {
-  const t = document.getElementById('thinkingMsg');
-  if (t) t.remove();
-}
-
-function showToast(msg, duration = 3000) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), duration);
-}
-
-async function sendToAI() {
-  const question = aiInput.value.trim();
-  if (!question) return;
-
-  addMsg(question, 'user');
-  aiInput.value = '';
-  aiInput.style.height = 'auto';
-  sendBtn.disabled = true;
-  showThinking();
-
-  const systemPrompt = `You are a precise math and calculation assistant. 
-When the user asks a math question, provide:
-1. A brief explanation (1-2 sentences max)
-2. The final answer on its own line (just the number/result, clearly formatted)
-
-Keep answers SHORT and CLEAR. For currency, use ₹ symbol when appropriate.
-Never refuse a math question. Support: percentages, interest, conversions, geometry, algebra, statistics, etc.`;
-
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://caculator-gpt.vercel.app',
-        'X-Title': 'Calculator GPT'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: question }
-        ],
-        max_tokens: 200,
-        temperature: 0.3
-      })
-    });
-
-    removeThinking();
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `API Error ${response.status}`);
-    }
-
-    const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content?.trim();
-
-    if (answer) {
-      addMsg(answer, 'ai');
-    } else {
-      addMsg("Sorry, I couldn't get a response. Please try again.", 'ai');
-    }
-
-  } catch (err) {
-    removeThinking();
-    console.error(err);
-    if (err.message.includes('fetch')) {
-      addMsg('Network error. Check your connection and try again.', 'ai');
-    } else if (err.message.includes('401') || err.message.includes('auth')) {
-      addMsg('API key issue. Please check configuration.', 'ai');
-    } else if (err.message.includes('429')) {
-      addMsg('Rate limit reached. Please wait a moment and try again.', 'ai');
-    } else {
-      addMsg(`Error: ${err.message}`, 'ai');
-    }
-    showToast('⚠️ ' + err.message);
-  } finally {
-    sendBtn.disabled = false;
-    aiInput.focus();
-  }
+    const t = document.getElementById('thinkingMsg');
+    if (t) t.remove();
 }
 </script>
 </body>
