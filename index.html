@@ -842,7 +842,7 @@ function switchTab(tab) {
 // ============ AI CHAT LOGIC (PRIVATE & SECURE) ============
 
 const OPENROUTER_API_KEY = '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';
-const MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
 
 const chatArea = document.getElementById('chatArea');
 const aiInput = document.getElementById('aiInput');
@@ -895,11 +895,10 @@ async function sendToAI() {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + OPENROUTER_API_KEY,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.origin,
-                'X-Title': 'Calculator GPT'
-            },
+        'Authorization': 'Bearer ' + OPENROUTER_API_KEY,
+        'Content-Type': 'application/json'
+        // Abhi ke liye Referer aur Title hata rahe hain taaki Provider block na kare
+      },
             body: JSON.stringify({
                 model: MODEL,
                 messages: [
