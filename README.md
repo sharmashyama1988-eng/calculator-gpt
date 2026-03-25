@@ -1,51 +1,39 @@
-अमित, Calculator GPT के लिए यहाँ एक सॉलिड और प्रोफेशनल readme.md है। इसे अपनी रिपॉजिटरी में अपडेट कर लो, इससे तुम्हारे प्रोजेक्ट की वैल्यू बढ़ जाएगी:
+# 🧮 Calculator GPT — AI Powered Natural Language Calculator
 
-readme.md
-🧮 Calculator GPT — AI Powered Natural Language Calculator
-यह एक स्मार्ट कैलकुलेटर है जो साधारण नंबर्स के बजाय Natural Language (आम बोलचाल की भाषा) को समझता है। इसे गणितीय समस्याओं को आसान और अधिक इंटरैक्टिव बनाने के लिए डिज़ाइन किया गया है।
+**Calculator GPT** is a smart, modern, and high-performance calculator that understands human language. Built by **Amit Kumar**, this tool combines a classic scientific calculator with the power of advanced AI models (via OpenRouter) to solve complex math problems, conversions, and logic questions.
 
-🌐 Live Demo
-आप इसे यहाँ लाइव देख सकते हैं: https://calculator-gpt.vercel.app/
+![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge)
+![Tech](https://img.shields.io/badge/Tech-HTML5%20%7C%20CSS3%20%7C%20JS-orange?style=for-the-badge)
+![AI](https://img.shields.io/badge/AI-Gemini%20%2F%20Llama-blueviolet?style=for-the-badge)
 
-✨ Key Features
-Natural Language Input: "What is 50 percent of 1500?" जैसे सवाल टाइप करें और तुरंत जवाब पाएं।
+## ✨ Features
 
-AI-Powered Logic: जटिल गणनाओं को समझने के लिए इंटेलिजेंट एल्गोरिदम का उपयोग।
+- **🔢 Classic Mode:** High-precision standard calculator with history tracking.
+- **🤖 AI Mode (✨ Ask AI):** Type math questions in plain English/Hindi like:
+  - *"What is 15% of ₹8500?"*
+  - *"Convert 5 km to miles"*
+  - *"Simple interest on ₹10000 at 8% for 3 years"*
+- **📱 Responsive Design:** Fully optimized for Mobile, Tablet, and Desktop.
+- **🎨 Glassmorphism UI:** Beautiful dark-themed interface with smooth animations.
+- **⚡ Real-time Processing:** Fast AI responses using the latest free models from OpenRouter.
 
-Minimalist UI: साफ और आधुनिक डिज़ाइन जो यूज़र एक्सपीरियंस (UX) को प्राथमिकता देता है।
+## 🛠️ Tech Stack
 
-Instant Results: बिना किसी देरी के तेज़ और सटीक गणना।
+- **Frontend:** HTML5, CSS3 (Custom Properties & Keyframes), Vanilla JavaScript.
+- **Fonts:** Space Mono & DM Sans (Google Fonts).
+- **API:** OpenRouter API (Accessing Gemini/Llama models).
+- **Deployment:** Vercel.
 
-Fully Responsive: मोबाइल, टैबलेट और डेस्कटॉप पर समान रूप से काम करता है।
+## 🚀 How to Use
 
-🛠️ Tech Stack
-Frontend: HTML5, CSS3, और JavaScript (Vanilla JS)।
+1. **Calculator Tab:** Use it like a normal calculator for quick sums.
+2. **Ask AI Tab:** Type your math problem in natural language and hit **Enter** or click the **➤** button.
+3. **Suggestions:** Click on the suggestion chips to quickly test common math queries.
 
-Logic: विजुअल और लॉजिकल प्रोसेसिंग के लिए कस्टम स्क्रिप्ट्स।
+## 🛡️ Security Note
 
-Deployment: Vercel पर होस्ट किया गया।
+This project is deployed using a **Private Repository** to protect API keys and sensitive logic. If you are forking this, ensure you use your own API keys via Environment Variables for maximum security.
 
-🚀 How to Use
-इनपुट बॉक्स में अपनी गणितीय समस्या (Math Problem) टाइप करें।
+---
 
-"Calculate" बटन दबाएं या 'Enter' हिट करें।
-
-AI आपकी भाषा को डिकोड करेगा और आपको सटीक परिणाम दिखाएगा।
-
-📂 Project Structure
-Plaintext
-├── index.html    # Main UI and Layout
-├── style.css     # Custom CSS for styling
-├── script.js     # AI Logic and Calculation
-├── sitemap.xml   # SEO Optimization
-└── robots.txt    # Crawler Instructions
-📫 Contact & Support
-अगर आपका कोई सुझाव है या आप इस प्रोजेक्ट में योगदान (Contribute) करना चाहते हैं, तो संपर्क करें:
-
-GitHub: sharmashyama1988-eng
-
-YouTube: Codenite Amit
-
-Email: amitk100831@gmail.com
-
-Developed with ❤️ by Amit Kumar
+Built with ❤️ by [Amit Kumar](https://github.com/sharmashyama1988-eng)
