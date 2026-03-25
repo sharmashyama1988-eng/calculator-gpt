@@ -841,7 +841,7 @@ function switchTab(tab) {
 
 // ============ AI CHAT LOGIC ============
 const OPENROUTER_API_KEY = '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';
-const MODEL = 'mistralai/mistral-7b-instruct:free'; // Free model on OpenRouter
+const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free'; // Free model on OpenRouter
 
 const chatArea = document.getElementById('chatArea');
 const aiInput = document.getElementById('aiInput');
@@ -961,7 +961,7 @@ Never refuse a math question. Support: percentages, interest, conversions, geome
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${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}`,
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://caculator-gpt.vercel.app',
         'X-Title': 'Calculator GPT'
