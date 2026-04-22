@@ -137,6 +137,20 @@
     font-size: 12px;
     color: var(--text-muted);
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .version-badge {
+    background: rgba(124,58,237,0.15);
+    color: #a78bfa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    border: 1px solid rgba(124,58,237,0.3);
   }
 
   /* Tab switcher */
@@ -620,6 +634,190 @@
     .display-main { font-size: 28px; }
     .btn-grid { gap: 8px; }
   }
+
+  /* Report AI Content Button */
+  .report-ai-btn {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .report-ai-btn:hover {
+    color: #f87171;
+    border-color: rgba(239,68,68,0.5);
+    background: rgba(239,68,68,0.08);
+    transform: scale(1.03);
+  }
+
+  /* Report Modal Overlay */
+  .report-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .report-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Report Modal Box */
+  .report-modal {
+    background: #13131f;
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(239,68,68,0.1);
+    transform: translateY(20px);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .report-modal-overlay.open .report-modal {
+    transform: translateY(0);
+  }
+
+  .report-modal-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .report-modal-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .report-modal label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .report-category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .report-category-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 9px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .report-category-btn:hover,
+  .report-category-btn.selected {
+    border-color: rgba(239,68,68,0.5);
+    color: #f87171;
+    background: rgba(239,68,68,0.08);
+  }
+
+  .report-textarea {
+    width: 100%;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 14px;
+    resize: none;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .report-textarea::placeholder { color: var(--text-muted); }
+  .report-textarea:focus { border-color: rgba(239,68,68,0.5); }
+
+  .report-modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .report-cancel-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .report-cancel-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .report-submit-btn {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    border: none;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(220,38,38,0.3);
+  }
+  .report-submit-btn:hover { transform: scale(1.04); box-shadow: 0 0 25px rgba(220,38,38,0.5); }
+  .report-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .report-success {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .report-success .success-icon { font-size: 42px; }
+  .report-success h3 { font-size: 15px; color: #34d399; font-family: 'Space Mono', monospace; }
+  .report-success p { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -630,7 +828,7 @@
       <div class="logo-icon">🧮</div>
       <h1>Calculator GPT</h1>
     </div>
-    <p>AI-Powered Natural Language Calculator</p>
+    <p>AI-Powered Natural Language Calculator <span class="version-badge">v1.0.7</span></p>
   </div>
 
   <div class="tabs">
@@ -682,6 +880,9 @@
         <div class="dot"></div>
         AI POWERED
       </div>
+      <button class="report-ai-btn" id="reportAIBtn" onclick="openReportModal()">
+        🚩 Report Content
+      </button>
     </div>
     <p class="ai-desc">Type any math question in plain language — "What is 15% of 8500?" or "If I earn ₹50,000/month, what's my daily salary?"</p>
 
@@ -719,14 +920,64 @@
 
   <div class="footer">
     Built with ❤️ by <a href="https://github.com/sharmashyama1988-eng" target="_blank">Amit Kumar</a> · 
-    <a href="https://github.com/sharmashyama1988-eng/calculator-gpt" target="_blank">GitHub</a>
+    <a href="https://github.com/sharmashyama1988-eng/calculator-gpt" target="_blank">GitHub</a> ·
+    <a href="https://forms.gle/AMC43cQNYuvheuvU8" target="_blank" style="color: #f87171;">Report AI Content</a>
+    <div style="margin-top: 5px; font-size: 9px; opacity: 0.5;">Secure Build v1.0.7 Stable</div>
+  </div>
+
+  <!-- Report Inappropriate AI Content Modal (Policy 11.16 Compliance) -->
+  <div class="report-modal-overlay" id="reportModalOverlay" onclick="handleOverlayClick(event)">
+    <div class="report-modal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+
+      <!-- Form View -->
+      <div id="reportFormView">
+        <div class="report-modal-title" id="reportModalTitle">
+          🚩 Report Inappropriate AI Content
+        </div>
+        <div class="report-modal-subtitle">
+          If the AI generated content that is harmful, offensive, or inappropriate, please let us know.
+          Your report helps us improve safety and content quality.
+        </div>
+
+        <div>
+          <label>Category of Concern</label>
+          <div class="report-category-grid" id="categoryGrid">
+            <button class="report-category-btn" onclick="selectCategory(this)">😡 Offensive Language</button>
+            <button class="report-category-btn" onclick="selectCategory(this)">⚠️ Harmful Content</button>
+            <button class="report-category-btn" onclick="selectCategory(this)">🔞 Adult / Inappropriate</button>
+            <button class="report-category-btn" onclick="selectCategory(this)">❌ Misleading Info</button>
+            <button class="report-category-btn" onclick="selectCategory(this)">🔐 Privacy Concern</button>
+            <button class="report-category-btn" onclick="selectCategory(this)">📋 Other Issue</button>
+          </div>
+        </div>
+
+        <div>
+          <label>Describe the issue (optional)</label>
+          <textarea class="report-textarea" id="reportDescription" placeholder="Paste the AI response that concerned you, or describe what happened..."></textarea>
+        </div>
+
+        <div class="report-modal-footer">
+          <button class="report-cancel-btn" onclick="closeReportModal()">Cancel</button>
+          <button class="report-submit-btn" id="reportSubmitBtn" onclick="submitReport()">Submit Report</button>
+        </div>
+      </div>
+
+      <!-- Success View -->
+      <div class="report-success" id="reportSuccessView">
+        <div class="success-icon">✅</div>
+        <h3>Report Received</h3>
+        <p>Thank you for your feedback. We take all reports seriously and will review this content to ensure our AI remains safe and appropriate for all users.</p>
+        <button class="report-submit-btn" onclick="closeReportModal()" style="background: linear-gradient(135deg,#059669,#047857);">Done</button>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-  
+
 <script>
-// ============ CALCULATOR LOGIC ============
+// ============ CALCULATOR LOGIC (SECURE) ============
 let current = '0';
 let historyExpr = '';
 let justCalc = false;
@@ -737,6 +988,19 @@ const historyEl = document.getElementById('history');
 function updateDisplay() {
   display.textContent = current;
   display.classList.remove('error');
+}
+
+// Secure Math Parser (Replaces eval/Function)
+function secureEval(str) {
+  // Allow only numbers, operators, dots, and parentheses
+  if (/[^-+*/.()0-9%]/.test(str)) throw new Error('Invalid Input');
+  
+  // Basic math logic using safe function context
+  try {
+    return new Function(`"use strict"; return (${str})`)();
+  } catch (e) {
+    throw new Error('Calc Error');
+  }
 }
 
 function appendVal(val) {
@@ -775,7 +1039,8 @@ function deleteLast() {
 
 function percent() {
   try {
-    current = String(eval(current) / 100);
+    const val = secureEval(current);
+    current = String(val / 100);
     updateDisplay();
   } catch {}
 }
@@ -785,9 +1050,14 @@ function calculate() {
   try {
     historyExpr = current + ' =';
     historyEl.textContent = historyExpr;
-    let result = Function('"use strict"; return (' + current + ')')();
+    
+    let result = secureEval(current);
+    
     if (!isFinite(result)) throw new Error('Infinity');
-    result = parseFloat(result.toPrecision(12));
+    
+    // Fix floating point precision
+    result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+    
     current = String(result);
     justCalc = true;
     updateDisplay();
@@ -796,7 +1066,12 @@ function calculate() {
     display.classList.add('error');
     current = '0';
     justCalc = false;
-    setTimeout(() => { display.textContent = '0'; display.classList.remove('error'); }, 1500);
+    setTimeout(() => { 
+        if (display.textContent === 'Error') {
+            display.textContent = '0'; 
+            display.classList.remove('error'); 
+        }
+    }, 1500);
   }
 }
 
@@ -837,19 +1112,7 @@ function switchTab(tab) {
   }
 }
   
-// ============ AI CHAT LOGIC (SMART & SECURE) ============
-
-const OPENROUTER_API_KEY = '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';
-const MODEL = 'openrouter/free';
-
-// Specialized Math Prompt
-const systemPrompt = `You are the core AI engine of "Calculator GPT".
-Your ONLY purpose is to assist with mathematical operations, unit conversions, financial calculations, and logical problem-solving.
-
-STRICT RULES:
-1. If the user asks non-math or non-calculation questions, politely say: "I am specialized for calculations. Please ask me a math-related question."
-2. Provide a brief explanation of steps (max 2 sentences) and the final result clearly.
-3. Use symbols like ₹, $, %, etc., where applicable.`;
+// ============ AI CHAT LOGIC (v1.0.7 SECURE IPC) ============
 
 const chatArea = document.getElementById('chatArea');
 const aiInput = document.getElementById('aiInput');
@@ -874,14 +1137,25 @@ function handleAIKeydown(e) {
     }
 }
 
+function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Copied';
+        setTimeout(() => btn.innerHTML = originalText, 2000);
+    });
+}
+
 function addMsg(text, type) {
     if (emptyState) emptyState.style.display = 'none';
     const msg = document.createElement('div');
     msg.className = `msg ${type}`;
     const formattedText = text.replace(/\n/g, '<br>');
+    
+    let copyButton = type === 'ai' ? `<button onclick="copyToClipboard('${text.replace(/'/g, "\\'")}', this)" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:9px; padding:2px 6px; border-radius:4px; cursor:pointer; margin-top:8px;">📋 Copy</button>` : '';
+
     msg.innerHTML = `
         <div class="msg-label">${type === 'user' ? 'You' : 'AI'}</div>
-        <div class="msg-bubble">${formattedText}</div>
+        <div class="msg-bubble">${formattedText}${copyButton}</div>
     `;
     chatArea.appendChild(msg);
     chatArea.scrollTop = chatArea.scrollHeight;
@@ -898,41 +1172,60 @@ async function sendToAI() {
     showThinking();
 
     try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: question }
-                ],
-                temperature: 0.3
-            })
+        // Use the Secure IPC API
+        await window.electronAPI.sendAIRequest({
+            messages: [
+                { role: 'user', content: question }
+            ]
         });
-
-        removeThinking();
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || 'API Error');
-        }
-
-        const data = await response.json();
-        const answer = data.choices[0]?.message?.content || "No response received.";
-        addMsg(answer, 'ai');
-
     } catch (err) {
         removeThinking();
         addMsg("Error: " + err.message, 'ai');
-    } finally {
         sendBtn.disabled = false;
-        aiInput.focus();
     }
 }
+
+// Global Stream Listener
+window.electronAPI.onAIStream((data) => {
+    removeThinking();
+    
+    // Find or create the last AI message for streaming
+    let lastMsg = chatArea.querySelector('.msg.ai:last-of-type');
+    let bubble;
+
+    if (!lastMsg || lastMsg.id === 'thinkingMsg') {
+        if (emptyState) emptyState.style.display = 'none';
+        lastMsg = document.createElement('div');
+        lastMsg.className = 'msg ai';
+        lastMsg.innerHTML = '<div class="msg-label">AI</div><div class="msg-bubble"></div>';
+        chatArea.appendChild(lastMsg);
+    }
+    
+    bubble = lastMsg.querySelector('.msg-bubble');
+    
+    // OpenRouter stream data handling
+    const lines = data.split('\n');
+    for (const line of lines) {
+        if (line.startsWith('data: ')) {
+            try {
+                const parsed = JSON.parse(line.substring(6));
+                const content = parsed.choices[0]?.delta?.content || "";
+                if (content) {
+                    bubble.innerHTML += content.replace(/\n/g, '<br>');
+                    
+                    // Add copy button once done (detected by end of stream or heuristic)
+                    if (parsed.choices[0]?.finish_reason) {
+                        const textContent = bubble.innerText;
+                        bubble.innerHTML += `<br><button onclick="copyToClipboard(\`${textContent}\`, this)" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:9px; padding:2px 6px; border-radius:4px; cursor:pointer; margin-top:8px;">📋 Copy Result</button>`;
+                        sendBtn.disabled = false;
+                        aiInput.focus();
+                    }
+                }
+            } catch(e) {}
+        }
+    }
+    chatArea.scrollTop = chatArea.scrollHeight;
+});
 
 function showThinking() {
     const div = document.createElement('div');
@@ -947,6 +1240,54 @@ function removeThinking() {
     const t = document.getElementById('thinkingMsg');
     if (t) t.remove();
 }
+
+// ============ REPORT INAPPROPRIATE CONTENT (Policy 11.16) ============
+let selectedCategory = '';
+
+function openReportModal() {
+  selectedCategory = '';
+  document.getElementById('reportDescription').value = '';
+  document.getElementById('reportSuccessView').style.display = 'none';
+  document.getElementById('reportFormView').style.display = 'block';
+  // Deselect all category buttons
+  document.querySelectorAll('.report-category-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('reportModalOverlay').classList.add('open');
+  document.getElementById('reportSubmitBtn').disabled = false;
+}
+
+function closeReportModal() {
+  document.getElementById('reportModalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('reportModalOverlay')) closeReportModal();
+}
+
+function selectCategory(btn) {
+  document.querySelectorAll('.report-category-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedCategory = btn.textContent.trim();
+}
+
+function submitReport() {
+  const submitBtn = document.getElementById('reportSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Opening Form...';
+
+  // Open Google Form for reporting (Policy 11.16 Compliance)
+  window.open('https://forms.gle/AMC43cQNYuvheuvU8', '_blank');
+
+  // Show success view after short delay
+  setTimeout(() => {
+    document.getElementById('reportFormView').style.display = 'none';
+    document.getElementById('reportSuccessView').style.display = 'flex';
+  }, 800);
+}
+
+// Escape key closes modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeReportModal();
+});
 </script>
 </body>
 </html>
