@@ -1,0 +1,33 @@
+{
+  "applicationId": "js.neutralino.calculatorgpt",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/resources/",
+  "url": "/index.html",
+  "modes": {
+    "window": {
+      "title": "Calculator GPT",
+      "width": 450,
+      "height": 750,
+      "minWidth": 450,
+      "minHeight": 750,
+      "maxWidth": 450,
+      "maxHeight": 750,
+      "resizable": false,
+      "icon": "/resources/logo.png"
+    }
+  },
+  "cli": {
+    "binaryName": "CalculatorGPT",
+    "binaryVersion": "5.3.0",
+    "clientVersion": "5.3.0",
+    "distributionPath": "/dist/",
+    "resourcesPath": "/resources/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/resources/neutralino.js"
+  },
+  "logging": {
+    "enabled": false
+  }
+}

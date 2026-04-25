@@ -1,0 +1,14 @@
+{
+    "name":  "calculator-gpt",
+    "version":  "1.0.7",
+    "description":  "AI-Powered Natural Language Calculator",
+    "main":  "main.js",
+    "scripts":  {
+                    "start":  "electron .",
+                    "build-exe":  "electron-packager . \"Calculator GPT\" --platform=win32 --arch=x64 --out=dist --overwrite"
+                },
+    "devDependencies":  {
+                            "electron":  "^30.5.1",
+                            "electron-packager":  "^17.1.2"
+                        }
+}

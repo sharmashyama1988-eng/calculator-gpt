@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculator GPT — AI Powered Natural Language Calculator</title>
+<meta name="description" content="Solve math problems using natural language with Calculator GPT. A smart AI-powered calculator built by Amit Kumar.">
+<meta name="keywords" content="Calculator GPT, AI Calculator, Natural Language Math, Amit Kumar, Codenite Amit">
+<meta name="google-site-verification" content="pE_h0mGnQTI35A2Z6drNRWA-dWCQQ6QhKz7be-Mq78g" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --border: #2a2a40;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --display-bg: #080810;
+    --btn-num: #16162a;
+    --btn-num-hover: #1e1e38;
+    --btn-op: #1e1040;
+    --btn-op-hover: #2d1a5e;
+    --btn-clear: #1a0a0a;
+    --btn-clear-hover: #2d1010;
+    --btn-eq: #4c1d95;
+    --btn-eq-hover: #6d28d9;
+    --glow: rgba(124, 58, 237, 0.3);
+    --glow2: rgba(6, 182, 212, 0.2);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 30%, rgba(124,58,237,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 70%, rgba(6,182,212,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 60% 20%, rgba(245,158,11,0.04) 0%, transparent 70%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes bgPulse {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.05) rotate(2deg); }
+  }
+
+  /* Grid overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 0 0 8px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .header .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a78bfa, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  .header p {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Tab switcher */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .tab-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    box-shadow: 0 0 15px rgba(124,58,237,0.2);
+    border: 1px solid var(--border);
+  }
+
+  .tab-btn:hover:not(.active) {
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Calculator Panel */
+  .calc-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    animation: fadeUp 0.5s 0.15s ease both;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* Display */
+  .display-wrap {
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .display-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+
+  .display-history {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    min-height: 20px;
+    word-break: break-all;
+    text-align: right;
+    transition: all 0.2s;
+  }
+
+  .display-main {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text);
+    word-break: break-all;
+    text-align: right;
+    line-height: 1.1;
+    transition: all 0.2s;
+    min-height: 44px;
+  }
+
+  .display-main.error {
+    color: #f87171;
+    font-size: 22px;
+  }
+
+  /* Buttons grid */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .btn {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 18px 8px;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+
+  .btn:active::after { background: rgba(255,255,255,0.08); }
+
+  .btn-num {
+    background: var(--btn-num);
+  }
+  .btn-num:hover { background: var(--btn-num-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+  .btn-op {
+    background: var(--btn-op);
+    color: #a78bfa;
+    border-color: rgba(124,58,237,0.3);
+  }
+  .btn-op:hover { background: var(--btn-op-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+
+  .btn-clear {
+    background: var(--btn-clear);
+    color: #f87171;
+    border-color: rgba(239,68,68,0.3);
+  }
+  .btn-clear:hover { background: var(--btn-clear-hover); transform: translateY(-1px); }
+
+  .btn-del {
+    background: var(--btn-op);
+    color: #94a3b8;
+    border-color: rgba(148,163,184,0.2);
+  }
+  .btn-del:hover { background: var(--btn-op-hover); transform: translateY(-1px); }
+
+  .btn-eq {
+    background: linear-gradient(135deg, var(--accent), #5b21b6);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--glow);
+    grid-row: span 2;
+    font-size: 24px;
+  }
+  .btn-eq:hover { background: linear-gradient(135deg, #8b5cf6, var(--accent)); transform: translateY(-1px); box-shadow: 0 0 30px var(--glow); }
+
+  .btn-zero { grid-column: span 2; }
+
+  .btn-percent {
+    background: var(--btn-op);
+    color: var(--accent2);
+    border-color: rgba(6,182,212,0.3);
+  }
+  .btn-percent:hover { background: var(--btn-op-hover); transform: translateY(-1px); }
+
+  /* AI Panel */
+  .ai-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    animation: fadeUp 0.5s 0.15s ease both;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ai-panel.active { display: flex; }
+  .calc-panel.hidden { display: none; }
+
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1));
+    border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: #a78bfa;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .ai-badge .dot {
+    width: 6px; height: 6px;
+    background: #06b6d4;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .ai-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* Chat area */
+  .chat-area {
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    min-height: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: msgIn 0.3s ease both;
+  }
+
+  @keyframes msgIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:none; } }
+
+  .msg.user { align-items: flex-end; }
+  .msg.ai { align-items: flex-start; }
+
+  .msg-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 0 4px;
+  }
+
+  .msg-bubble {
+    max-width: 90%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .msg.user .msg-bubble {
+    background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(124,58,237,0.15));
+    border: 1px solid rgba(124,58,237,0.4);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.ai .msg-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+  }
+
+  .msg.ai .msg-bubble .result-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #a78bfa;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+
+  .thinking span {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1s ease infinite;
+  }
+  .thinking span:nth-child(2) { animation-delay: 0.15s; background: var(--accent2); }
+  .thinking span:nth-child(3) { animation-delay: 0.3s; background: var(--accent3); }
+
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    gap: 10px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .empty-state .icon { font-size: 32px; opacity: 0.5; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* Suggestions */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .suggestion-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .suggestion-chip:hover {
+    border-color: var(--accent);
+    color: #a78bfa;
+    background: rgba(124,58,237,0.1);
+  }
+
+  /* Input row */
+  .ai-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .ai-input {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    resize: none;
+    min-height: 46px;
+    max-height: 100px;
+  }
+
+  .ai-input::placeholder { color: var(--text-muted); }
+  .ai-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+
+  .ai-send-btn {
+    background: linear-gradient(135deg, var(--accent), #5b21b6);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 18px;
+    box-shadow: 0 0 15px var(--glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-send-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--glow); }
+  .ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding-top: 4px;
+    animation: fadeUp 0.5s 0.4s ease both;
+  }
+
+  .footer a { color: var(--accent2); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity:0; transform: translateY(-12px); }
+    to { opacity:1; transform: none; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(12px); }
+    to { opacity:1; transform: none; }
+  }
+
+  /* Press animation for buttons */
+  .btn:active { transform: scale(0.95) translateY(0) !important; }
+
+  /* Error toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a0a0a;
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #f87171;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Model indicator */
+  .model-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .model-dot {
+    width: 6px; height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #10b981;
+  }
+
+  @media (max-width: 420px) {
+    .btn { padding: 15px 6px; font-size: 14px; }
+    .display-main { font-size: 28px; }
+    .btn-grid { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🧮</div>
+      <h1>Calculator GPT</h1>
+    </div>
+    <p>AI-Powered Natural Language Calculator</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('calc')" id="tab-calc">
+      🔢 Calculator
+    </button>
+    <button class="tab-btn" onclick="switchTab('ai')" id="tab-ai">
+      ✨ Ask AI
+    </button>
+  </div>
+
+  <!-- Standard Calculator -->
+  <div class="calc-panel" id="calcPanel">
+    <div class="display-wrap">
+      <div class="display-history" id="history"></div>
+      <div class="display-main" id="display">0</div>
+    </div>
+    <div class="btn-grid">
+      <button class="btn btn-clear" onclick="clearAll()">AC</button>
+      <button class="btn btn-percent" onclick="percent()">%</button>
+      <button class="btn btn-del" onclick="deleteLast()">⌫</button>
+      <button class="btn btn-op" onclick="appendVal('/')">÷</button>
+
+      <button class="btn btn-num" onclick="appendVal('7')">7</button>
+      <button class="btn btn-num" onclick="appendVal('8')">8</button>
+      <button class="btn btn-num" onclick="appendVal('9')">9</button>
+      <button class="btn btn-op" onclick="appendVal('*')">×</button>
+
+      <button class="btn btn-num" onclick="appendVal('4')">4</button>
+      <button class="btn btn-num" onclick="appendVal('5')">5</button>
+      <button class="btn btn-num" onclick="appendVal('6')">6</button>
+      <button class="btn btn-op" onclick="appendVal('-')">−</button>
+
+      <button class="btn btn-num" onclick="appendVal('1')">1</button>
+      <button class="btn btn-num" onclick="appendVal('2')">2</button>
+      <button class="btn btn-num" onclick="appendVal('3')">3</button>
+      <button class="btn btn-op" onclick="appendVal('+')">+</button>
+
+      <button class="btn btn-num btn-zero" onclick="appendVal('0')">0</button>
+      <button class="btn btn-num" onclick="appendVal('.')">.</button>
+      <button class="btn btn-eq" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <!-- AI Chat Panel -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-header">
+      <div class="ai-badge">
+        <div class="dot"></div>
+        AI POWERED
+      </div>
+    </div>
+    <p class="ai-desc">Type any math question in plain language — "What is 15% of 8500?" or "If I earn ₹50,000/month, what's my daily salary?"</p>
+
+    <div class="model-info">
+      <div class="model-dot"></div>
+      <span>Free Model via OpenRouter · No Login Required</span>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="empty-state" id="emptyState">
+        <div class="icon">🤖</div>
+        <p>Ask me anything math-related!<br>I understand natural language.</p>
+      </div>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+      <div class="suggestion-chip" onclick="fillSuggestion(this)">15% of ₹8500?</div>
+      <div class="suggestion-chip" onclick="fillSuggestion(this)">Square root of 144</div>
+      <div class="suggestion-chip" onclick="fillSuggestion(this)">Convert 5 km to miles</div>
+      <div class="suggestion-chip" onclick="fillSuggestion(this)">Simple interest on ₹10000 at 8% for 3 years</div>
+    </div>
+
+    <div class="ai-input-row">
+      <textarea
+        class="ai-input"
+        id="aiInput"
+        placeholder="e.g. What is 20% tip on ₹1200 bill?"
+        rows="1"
+        onkeydown="handleAIKeydown(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="ai-send-btn" id="sendBtn" onclick="sendToAI()">➤</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Built with ❤️ by <a href="https://github.com/sharmashyama1988-eng" target="_blank">Amit Kumar</a> · 
+    <a href="https://github.com/sharmashyama1988-eng/calculator-gpt" target="_blank">GitHub</a>
+  </div>
+<!-- End of Wrapper -->
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- STABLE SCRIPTS LOADED AT END -->
+<script src="neutralino.js"></script>
+<script>
+  // Ensure Neutralino is loaded before init
+  if (typeof Neutralino !== 'undefined') {
+    Neutralino.init();
+    Neutralino.events.on('windowClose', () => {
+      Neutralino.app.exit();
+    });
+  }
+</script>
+
+<script>
+// ============ CALCULATOR LOGIC ============
+let current = '0';
+let historyExpr = '';
+let justCalc = false;
+
+const display = document.getElementById('display');
+const historyEl = document.getElementById('history');
+
+function updateDisplay() {
+  display.textContent = current;
+  display.classList.remove('error');
+}
+
+function appendVal(val) {
+  if (justCalc && !isNaN(val)) {
+    current = val;
+    justCalc = false;
+  } else if (justCalc && (val === '+' || val === '-' || val === '*' || val === '/')) {
+    justCalc = false;
+  } else {
+    if (current === '0' && val !== '.' && !isNaN(val)) {
+      current = val;
+    } else {
+      if (val === '.' && current.split(/[\+\-\*\/]/).pop().includes('.')) return;
+      current += val;
+    }
+  }
+  updateDisplay();
+}
+
+function clearAll() {
+  current = '0';
+  historyExpr = '';
+  historyEl.textContent = '';
+  justCalc = false;
+  updateDisplay();
+}
+
+function deleteLast() {
+  if (current.length <= 1 || (current.length === 2 && current[0] === '-')) {
+    current = '0';
+  } else {
+    current = current.slice(0, -1);
+  }
+  updateDisplay();
+}
+
+function percent() {
+  try {
+    current = String(eval(current) / 100);
+    updateDisplay();
+  } catch {}
+}
+
+function calculate() {
+  if (!current || current === '0') return;
+  try {
+    // Basic sanitization: only allow numbers and operators
+    const sanitizedInput = current.replace(/[^-+*/.()0-9%]/g, '');
+    historyExpr = sanitizedInput + ' =';
+    historyEl.textContent = historyExpr;
+    
+    let result = Function('"use strict"; return (' + sanitizedInput + ')')();
+    
+    if (!isFinite(result)) throw new Error('Infinity');
+    
+    // Fix floating point precision (0.1 + 0.2 = 0.30000000000000004 fix)
+    result = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+    
+    current = String(result);
+    justCalc = true;
+    updateDisplay();
+  } catch {
+    display.textContent = 'Error';
+    display.classList.add('error');
+    current = '0';
+    justCalc = false;
+    setTimeout(() => { 
+        if (display.textContent === 'Error') {
+            display.textContent = '0'; 
+            display.classList.remove('error'); 
+        }
+    }, 1500);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('aiPanel').style.display === 'flex') return;
+  if (e.key >= '0' && e.key <= '9') appendVal(e.key);
+  else if (e.key === '+') appendVal('+');
+  else if (e.key === '-') appendVal('-');
+  else if (e.key === '*') appendVal('*');
+  else if (e.key === '/') { e.preventDefault(); appendVal('/'); }
+  else if (e.key === '.') appendVal('.');
+  else if (e.key === '%') percent();
+  else if (e.key === 'Enter' || e.key === '=') calculate();
+  else if (e.key === 'Backspace') deleteLast();
+  else if (e.key === 'Escape') clearAll();
+});
+
+// ============ TAB SWITCHING ============
+function switchTab(tab) {
+  const calcPanel = document.getElementById('calcPanel');
+  const aiPanel = document.getElementById('aiPanel');
+  const tabCalc = document.getElementById('tab-calc');
+  const tabAI = document.getElementById('tab-ai');
+
+  if (tab === 'calc') {
+    calcPanel.classList.remove('hidden');
+    aiPanel.classList.remove('active');
+    aiPanel.style.display = 'none';
+    tabCalc.classList.add('active');
+    tabAI.classList.remove('active');
+  } else {
+    calcPanel.classList.add('hidden');
+    aiPanel.style.display = 'flex';
+    aiPanel.classList.add('active');
+    tabAI.classList.add('active');
+    tabCalc.classList.remove('active');
+    document.getElementById('aiInput').focus();
+  }
+}
+  
+// ============ AI CHAT LOGIC (SMART & SECURE) ============
+
+const OPENROUTER_API_KEY = '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';
+const MODEL = 'openrouter/free';
+
+// Specialized Math Prompt
+const systemPrompt = `You are the core AI engine of "Calculator GPT".
+Your ONLY purpose is to assist with mathematical operations, unit conversions, financial calculations, and logical problem-solving.
+
+STRICT RULES:
+1. If the user asks non-math or non-calculation questions, politely say: "I am specialized for calculations. Please ask me a math-related question."
+2. Provide a brief explanation of steps (max 2 sentences) and the final result clearly.
+3. Use symbols like ₹, $, %, etc., where applicable.`;
+
+const chatArea = document.getElementById('chatArea');
+const aiInput = document.getElementById('aiInput');
+const sendBtn = document.getElementById('sendBtn');
+const emptyState = document.getElementById('emptyState');
+
+function fillSuggestion(el) {
+    aiInput.value = el.textContent;
+    aiInput.focus();
+    autoResize(aiInput);
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleAIKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendToAI();
+    }
+}
+
+function addMsg(text, type) {
+    if (emptyState) emptyState.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.className = `msg ${type}`;
+    const formattedText = text.replace(/\n/g, '<br>');
+    msg.innerHTML = `
+        <div class="msg-label">${type === 'user' ? 'You' : 'AI'}</div>
+        <div class="msg-bubble">${formattedText}</div>
+    `;
+    chatArea.appendChild(msg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+async function sendToAI() {
+    const question = aiInput.value.trim();
+    if (!question) return;
+
+    addMsg(question, 'user');
+    aiInput.value = '';
+    aiInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    showThinking();
+
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: MODEL,
+                stream: true,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: question }
+                ],
+                temperature: 0.3
+            })
+        });
+
+        removeThinking();
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || 'API Error');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        // Create a blank AI message for streaming
+        if (emptyState) emptyState.style.display = 'none';
+        const msg = document.createElement('div');
+        msg.className = 'msg ai';
+        msg.innerHTML = '<div class="msg-label">AI</div><div class="msg-bubble"></div>';
+        chatArea.appendChild(msg);
+        const bubble = msg.querySelector('.msg-bubble');
+        let fullText = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // Keep last incomplete piece
+            
+            for (const line of lines) {
+                if (line.trim() === '') continue;
+                if (line.includes('[DONE]')) continue;
+                if (line.startsWith('data: ')) {
+                    try {
+                        const parsed = JSON.parse(line.substring(6));
+                        const content = parsed.choices[0]?.delta?.content || "";
+                        if (content) {
+                            fullText += content;
+                            bubble.innerHTML = fullText.replace(/\n/g, '<br>');
+                            chatArea.scrollTop = chatArea.scrollHeight;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+
+    } catch (err) {
+        removeThinking();
+        addMsg("Error: " + err.message, 'ai');
+    } finally {
+        sendBtn.disabled = false;
+        aiInput.focus();
+    }
+}
+
+function showThinking() {
+    const div = document.createElement('div');
+    div.id = 'thinkingMsg';
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-label">AI</div><div class="thinking"><span></span><span></span><span></span></div>';
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function removeThinking() {
+    const t = document.getElementById('thinkingMsg');
+    if (t) t.remove();
+}
+</script>
+</body>
+</html>
