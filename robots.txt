@@ -1,2 +1,29 @@
+# Calculator GPT - Robots.txt Configuration
+# Allow all search engines to crawl and index the website
+
 User-agent: *
-Disallow: /
+Allow: /
+
+# Google-specific directives
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Bing search engine
+User-agent: Bingbot
+Allow: /
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Yahoo
+User-agent: Slurp
+Allow: /
+
+# Sitemap location for search engine discovery
+Sitemap: https://calculator-gpt.vercel.app/sitemap.xml
+
+# General crawl settings
+Crawl-delay: 1
+Request-rate: 1/1s
