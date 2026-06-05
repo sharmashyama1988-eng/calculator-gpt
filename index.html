@@ -1161,6 +1161,18 @@ function addMsg(text, type) {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
+const OPENROUTER_API_KEY = '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';
+const MODEL = 'openrouter/free';
+
+// Specialized Math Prompt
+const systemPrompt = `You are the core AI engine of "Calculator GPT".
+Your ONLY purpose is to assist with mathematical operations, unit conversions, financial calculations, and logical problem-solving.
+
+STRICT RULES:
+1. If the user asks non-math or non-calculation questions, politely say: "I am specialized for calculations. Please ask me a math-related question."
+2. Provide a brief explanation of steps (max 2 sentences) and the final result clearly.
+3. Use symbols like ₹, $, %, etc., where applicable.`;
+
 async function sendToAI() {
     const question = aiInput.value.trim();
     if (!question) return;
@@ -1172,12 +1184,44 @@ async function sendToAI() {
     showThinking();
 
     try {
-        // Use the Secure IPC API
-        await window.electronAPI.sendAIRequest({
-            messages: [
-                { role: 'user', content: question }
-            ]
-        });
+        if (window.electronAPI && typeof window.electronAPI.sendAIRequest === 'function') {
+            // Use the Secure IPC API
+            await window.electronAPI.sendAIRequest({
+                messages: [
+                    { role: 'user', content: question }
+                ]
+            });
+        } else {
+            // Web fallback using direct fetch to OpenRouter
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: question }
+                    ],
+                    temperature: 0.3
+                })
+            });
+
+            removeThinking();
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || 'API Error');
+            }
+
+            const data = await response.json();
+            const answer = data.choices[0]?.message?.content || "No response received.";
+            addMsg(answer, 'ai');
+            sendBtn.disabled = false;
+            aiInput.focus();
+        }
     } catch (err) {
         removeThinking();
         addMsg("Error: " + err.message, 'ai');
@@ -1186,46 +1230,48 @@ async function sendToAI() {
 }
 
 // Global Stream Listener
-window.electronAPI.onAIStream((data) => {
-    removeThinking();
-    
-    // Find or create the last AI message for streaming
-    let lastMsg = chatArea.querySelector('.msg.ai:last-of-type');
-    let bubble;
+if (window.electronAPI && typeof window.electronAPI.onAIStream === 'function') {
+    window.electronAPI.onAIStream((data) => {
+        removeThinking();
+        
+        // Find or create the last AI message for streaming
+        let lastMsg = chatArea.querySelector('.msg.ai:last-of-type');
+        let bubble;
 
-    if (!lastMsg || lastMsg.id === 'thinkingMsg') {
-        if (emptyState) emptyState.style.display = 'none';
-        lastMsg = document.createElement('div');
-        lastMsg.className = 'msg ai';
-        lastMsg.innerHTML = '<div class="msg-label">AI</div><div class="msg-bubble"></div>';
-        chatArea.appendChild(lastMsg);
-    }
-    
-    bubble = lastMsg.querySelector('.msg-bubble');
-    
-    // OpenRouter stream data handling
-    const lines = data.split('\n');
-    for (const line of lines) {
-        if (line.startsWith('data: ')) {
-            try {
-                const parsed = JSON.parse(line.substring(6));
-                const content = parsed.choices[0]?.delta?.content || "";
-                if (content) {
-                    bubble.innerHTML += content.replace(/\n/g, '<br>');
-                    
-                    // Add copy button once done (detected by end of stream or heuristic)
-                    if (parsed.choices[0]?.finish_reason) {
-                        const textContent = bubble.innerText;
-                        bubble.innerHTML += `<br><button onclick="copyToClipboard(\`${textContent}\`, this)" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:9px; padding:2px 6px; border-radius:4px; cursor:pointer; margin-top:8px;">📋 Copy Result</button>`;
-                        sendBtn.disabled = false;
-                        aiInput.focus();
-                    }
-                }
-            } catch(e) {}
+        if (!lastMsg || lastMsg.id === 'thinkingMsg') {
+            if (emptyState) emptyState.style.display = 'none';
+            lastMsg = document.createElement('div');
+            lastMsg.className = 'msg ai';
+            lastMsg.innerHTML = '<div class="msg-label">AI</div><div class="msg-bubble"></div>';
+            chatArea.appendChild(lastMsg);
         }
-    }
-    chatArea.scrollTop = chatArea.scrollHeight;
-});
+        
+        bubble = lastMsg.querySelector('.msg-bubble');
+        
+        // OpenRouter stream data handling
+        const lines = data.split('\n');
+        for (const line of lines) {
+            if (line.startsWith('data: ')) {
+                try {
+                    const parsed = JSON.parse(line.substring(6));
+                    const content = parsed.choices[0]?.delta?.content || "";
+                    if (content) {
+                        bubble.innerHTML += content.replace(/\n/g, '<br>');
+                        
+                        // Add copy button once done (detected by end of stream or heuristic)
+                        if (parsed.choices[0]?.finish_reason) {
+                            const textContent = bubble.innerText;
+                            bubble.innerHTML += `<br><button onclick="copyToClipboard(\`${textContent}\`, this)" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:9px; padding:2px 6px; border-radius:4px; cursor:pointer; margin-top:8px;">📋 Copy Result</button>`;
+                            sendBtn.disabled = false;
+                            aiInput.focus();
+                        }
+                    }
+                } catch(e) {}
+            }
+        }
+        chatArea.scrollTop = chatArea.scrollHeight;
+    });
+}
 
 function showThinking() {
     const div = document.createElement('div');
