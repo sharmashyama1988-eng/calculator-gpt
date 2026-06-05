@@ -1161,9 +1161,6 @@ function addMsg(text, type) {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-const OPENROUTER_API_KEY = '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';
-const MODEL = 'openrouter/free';
-
 // Specialized Math Prompt
 const systemPrompt = `You are the core AI engine of "Calculator GPT".
 Your ONLY purpose is to assist with mathematical operations, unit conversions, financial calculations, and logical problem-solving.
@@ -1192,28 +1189,25 @@ async function sendToAI() {
                 ]
             });
         } else {
-            // Web fallback using direct fetch to OpenRouter
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            // Web fallback using Vercel Serverless Function (secure proxy)
+            const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
-                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: MODEL,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: question }
-                    ],
-                    temperature: 0.3
+                    ]
                 })
             });
 
             removeThinking();
 
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || 'API Error');
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'API Error');
             }
 
             const data = await response.json();
