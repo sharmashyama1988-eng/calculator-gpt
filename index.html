@@ -89,25 +89,71 @@
 }
 
 /* Accent Palette Themes */
-:root[data-accent="emerald"]{
-  --op:#10b981;
-  --op-gradient:linear-gradient(135deg,#34d399,#10b981 45%,#059669);
-  --op-glow:rgba(16,185,129,.5);
-}
 :root[data-accent="cyan"]{
   --op:#00b8ff;
   --op-gradient:linear-gradient(135deg,#38bdf8,#00b8ff 45%,#0284c7);
   --op-glow:rgba(0,184,255,.5);
+  --acc:#00b8ff;
+}
+:root[data-accent="emerald"]{
+  --op:#10b981;
+  --op-gradient:linear-gradient(135deg,#34d399,#10b981 45%,#059669);
+  --op-glow:rgba(16,185,129,.5);
+  --acc:#10b981;
 }
 :root[data-accent="purple"]{
   --op:#a855f7;
   --op-gradient:linear-gradient(135deg,#c084fc,#a855f7 45%,#7c3aed);
   --op-glow:rgba(168,85,247,.5);
+  --acc:#a855f7;
 }
 :root[data-accent="rose"]{
   --op:#ff2d55;
   --op-gradient:linear-gradient(135deg,#fb7185,#ff2d55 45%,#e11d48);
   --op-glow:rgba(255,45,85,.5);
+  --acc:#ff2d55;
+}
+:root[data-accent="gold"]{
+  --op:#ffd60a;
+  --op-gradient:linear-gradient(135deg,#ffe55c,#ffd60a 45%,#d4a300);
+  --op-glow:rgba(255,214,10,.55);
+  --acc:#ffd60a;
+}
+:root[data-accent="indigo"]{
+  --op:#5e5ce6;
+  --op-gradient:linear-gradient(135deg,#818cf8,#5e5ce6 45%,#4338ca);
+  --op-glow:rgba(94,92,230,.5);
+  --acc:#5e5ce6;
+}
+:root[data-accent="coral"]{
+  --op:#ff6b4a;
+  --op-gradient:linear-gradient(135deg,#ff8f75,#ff6b4a 45%,#e64a23);
+  --op-glow:rgba(255,107,74,.5);
+  --acc:#ff6b4a;
+}
+:root[data-accent="mint"]{
+  --op:#00e5bc;
+  --op-gradient:linear-gradient(135deg,#5eead4,#00e5bc 45%,#0f766e);
+  --op-glow:rgba(0,229,188,.5);
+  --acc:#00e5bc;
+}
+:root[data-accent="fuchsia"]{
+  --op:#ff37a6;
+  --op-gradient:linear-gradient(135deg,#f472b6,#ff37a6 45%,#db2777);
+  --op-glow:rgba(255,55,166,.5);
+  --acc:#ff37a6;
+}
+:root[data-accent="stealth"]{
+  --op:#8e8e93;
+  --op-gradient:linear-gradient(135deg,#b0b0b8,#8e8e93 45%,#636366);
+  --op-glow:rgba(142,142,147,.45);
+  --acc:#8e8e93;
+}
+:root[data-accent="yellow"]{
+  --op:#ffe600;
+  --op-gradient:linear-gradient(135deg,#fff066,#ffe600 45%,#cca300);
+  --op-glow:rgba(255,230,0,.6);
+  --acc:#ffe600;
 }
 
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -274,9 +320,6 @@ html,body{
   gap:8px;
   width:100%;
   margin-bottom:2px;
-  z-index:2;
-  flex:none;
-}
   z-index:2;
   flex:none;
 }
@@ -1066,13 +1109,23 @@ body::after{
       <button class="tile" data-act="degT"><span class="ic" style="background:linear-gradient(135deg,#0a84ff,#64d2ff)">°</span><span id="tDeg">DEG</span></button>
       
       <div class="accent-box">
-        <span>Accent Color</span>
-        <div class="acc-dots">
-          <button class="adot active" data-color="orange" style="background:#ff9f0a" title="Sunset Orange"></button>
-          <button class="adot" data-color="emerald" style="background:#10b981" title="Neon Emerald"></button>
-          <button class="adot" data-color="cyan" style="background:#00b8ff" title="Electric Cyan"></button>
-          <button class="adot" data-color="purple" style="background:#a855f7" title="Cyber Purple"></button>
-          <button class="adot" data-color="rose" style="background:#ff2d55" title="Rose Pink"></button>
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:8px;">
+          <span>Accent Color (12 Themes)</span>
+          <button class="badge-btn" id="resetAccentBtn" title="Reset to Default Sunset Orange">Reset Default</button>
+        </div>
+        <div class="acc-dots" style="flex-wrap:wrap;gap:8px;">
+          <button class="adot active" data-color="orange" style="background:#ff9f0a" title="Sunset Orange (Default)"></button>
+          <button class="adot" data-color="cyan" style="background:#00b8ff" title="VisionOS Cyan"></button>
+          <button class="adot" data-color="emerald" style="background:#10b981" title="Cyber Emerald"></button>
+          <button class="adot" data-color="purple" style="background:#a855f7" title="Royal Amethyst"></button>
+          <button class="adot" data-color="rose" style="background:#ff2d55" title="Crimson Rose"></button>
+          <button class="adot" data-color="gold" style="background:#ffd60a" title="24K Amber Gold"></button>
+          <button class="adot" data-color="indigo" style="background:#5e5ce6" title="Cobalt Indigo"></button>
+          <button class="adot" data-color="coral" style="background:#ff6b4a" title="Sunset Coral"></button>
+          <button class="adot" data-color="mint" style="background:#00e5bc" title="Aquamarine Mint"></button>
+          <button class="adot" data-color="fuchsia" style="background:#ff37a6" title="Cyber Fuchsia"></button>
+          <button class="adot" data-color="stealth" style="background:#8e8e93" title="Titanium Stealth"></button>
+          <button class="adot" data-color="yellow" style="background:#ffe600" title="Solar Yellow"></button>
         </div>
       </div>
 
@@ -2385,17 +2438,75 @@ if(sBtn){
   };
 }
 
-/* Quick Accent Color Cycler */
-const ACCENT_CYCLE=['orange','cyan','emerald','purple','rose'];
+/* 12 Luxury Accent Color Themes & Hold-to-Reset */
+const ACCENT_CYCLE=['orange','cyan','emerald','purple','rose','gold','indigo','coral','mint','fuchsia','stealth','yellow'];
+const ACCENT_NAMES={
+  orange:'Sunset Orange (Default)',
+  cyan:'VisionOS Cyan',
+  emerald:'Cyber Emerald',
+  purple:'Royal Amethyst',
+  rose:'Crimson Rose',
+  gold:'24K Amber Gold',
+  indigo:'Cobalt Indigo',
+  coral:'Sunset Coral',
+  mint:'Aquamarine Mint',
+  fuchsia:'Cyber Fuchsia',
+  stealth:'Titanium Stealth',
+  yellow:'Solar Yellow'
+};
+
 const aBtn=$('#accentBtn');
+let accentHoldTimer=null;
+let isLongPress=false;
+
+function triggerAccentReset(){
+  applyAccent('orange');
+  haptic(35,'eq');
+  showCopyPill('Reset: Default Orange');
+  toast('Accent Reset to Default Orange');
+  if(aBtn){
+    aBtn.classList.add('hit');
+    setTimeout(()=>aBtn.classList.remove('hit'),320);
+  }
+}
+
+function startAccentHold(e){
+  isLongPress=false;
+  clearTimeout(accentHoldTimer);
+  accentHoldTimer=setTimeout(()=>{
+    isLongPress=true;
+    triggerAccentReset();
+  },550);
+}
+
+function cancelAccentHold(e){
+  clearTimeout(accentHoldTimer);
+}
+
 if(aBtn){
-  aBtn.onclick=()=>{
+  aBtn.title='Click to cycle themes · Hold to reset default';
+  aBtn.addEventListener('pointerdown',startAccentHold);
+  aBtn.addEventListener('pointerup',cancelAccentHold);
+  aBtn.addEventListener('pointercancel',cancelAccentHold);
+  aBtn.addEventListener('pointerleave',cancelAccentHold);
+
+  aBtn.onclick=e=>{
+    if(isLongPress){
+      isLongPress=false;
+      return;
+    }
     const cur=document.documentElement.dataset.accent||'orange';
     const next=ACCENT_CYCLE[(ACCENT_CYCLE.indexOf(cur)+1)%ACCENT_CYCLE.length];
     applyAccent(next);
     haptic(15,'op');
-    toast(`Accent: ${next.charAt(0).toUpperCase()+next.slice(1)}`);
+    const label=ACCENT_NAMES[next]||next;
+    toast(`Accent: ${label} (Hold 🎨 to Reset)`);
   };
+}
+
+const rstBtn=$('#resetAccentBtn');
+if(rstBtn){
+  rstBtn.onclick=()=>triggerAccentReset();
 }
 
 /* Apple VisionOS Specular Glare Pointer Tracker */

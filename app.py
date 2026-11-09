@@ -13,8 +13,13 @@ from urllib.parse import parse_qs, urlparse
 
 import webview
 from engine.master_solver import process_all_queries, solve_query
+from engine.llm_engine import preload_llm_async
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 PORT = 8765
 
 
@@ -121,18 +126,28 @@ def is_port_in_use(port: int) -> bool:
 
 
 def start_server():
-    """Runs internal daemon web server on PORT."""
-    if not is_port_in_use(PORT):
-        server = ThreadingHTTPServer(('127.0.0.1', PORT), ApiRequestHandler)
-        t = threading.Thread(target=server.serve_forever, daemon=True)
-        t.start()
-        print(f"[*] Local Calculator GPT HTTP Service running on http://127.0.0.1:{PORT}")
-    else:
-        print(f"[*] Local service already running on port {PORT}")
+    """Runs internal daemon web server with dynamic fallback if default port is occupied."""
+    global PORT
+    for p in range(8765, 8780):
+        try:
+            server = ThreadingHTTPServer(('127.0.0.1', p), ApiRequestHandler)
+            PORT = p
+            t = threading.Thread(target=server.serve_forever, daemon=True)
+            t.start()
+            print(f"[*] Local Calculator GPT HTTP Service running on http://127.0.0.1:{PORT}")
+            return PORT
+        except OSError:
+            if is_port_in_use(p):
+                PORT = p
+                print(f"[*] Reusing active local service on port {PORT}")
+                return PORT
+            continue
+    return PORT
 
 
 def main():
     start_server()
+    preload_llm_async()
     api = CalculatorApi()
 
     # If --server flag is passed, just keep serving HTTP
@@ -154,9 +169,9 @@ def main():
         title="Calculator GPT",
         url=url,
         js_api=api,
-        width=328,
-        height=540,
-        min_size=(300, 480),
+        width=348,
+        height=570,
+        min_size=(315, 490),
         background_color='#05060b',
         text_select=True
     )

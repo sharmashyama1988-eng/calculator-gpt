@@ -45,6 +45,10 @@ venv.bak/
 *.swp
 *.swo
 
+# Models & Large weights
+models/*.gguf
+*.gguf
+
 # OS files
 Thumbs.db
 ehthumbs.db

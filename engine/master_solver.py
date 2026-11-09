@@ -28,6 +28,7 @@ from .stats_engine import solve_statistics
 from .universal_solver import (
     solve_universal_motion, solve_universal_age, solve_universal_chain_work
 )
+from .llm_engine import solve_with_llm, preload_llm_async
 
 
 def solve_number_theory(query: str) -> Optional[Dict[str, Any]]:
@@ -201,6 +202,38 @@ def _solve_query_impl(raw_query: str) -> Dict[str, Any]:
     q = raw_query.strip()
     intent = detect_intent(q)
     
+    # Fast path: direct arithmetic evaluation
+    if intent == "ARITHMETIC_EXPR" and not re.search(r'[a-zA-Z]{2,}', q):
+        try:
+            expr = safe_parse(normalize_query(q))
+            simplified = sp.simplify(expr)
+            num_val = None
+            try:
+                if simplified.is_number:
+                    num_val = float(simplified.evalf())
+            except Exception:
+                pass
+
+            return {
+                "title": "Mathematical Expression Evaluation",
+                "summary_value": format_sympy_res(simplified),
+                "formula": "Standard Mathematical Simplification",
+                "rows": [
+                    ["Calculated Result", format_sympy_res(simplified)],
+                    ["Original Expression", raw_query],
+                    ["Numerical Value", f"{num_val:.6f}".rstrip('0').rstrip('.') if num_val is not None else "Exact Symbolic"]
+                ],
+                "steps": [
+                    f"Parsed expression: {format_sympy_res(expr)}",
+                    f"Apply algebraic identity simplification & arithmetic operations",
+                    f"Final simplified evaluation: {format_sympy_res(simplified)}"
+                ],
+                "insights": "Evaluated using exact arbitrary-precision symbolic mathematics via SymPy.",
+                "raw": num_val
+            }
+        except Exception:
+            pass
+
     # 1. Intent-based routing with safe execution
     try:
         if intent == "DIFFERENTIAL_EQUATION":
@@ -299,6 +332,12 @@ def _solve_query_impl(raw_query: str) -> Dict[str, Any]:
         except Exception:
             continue
 
+    # 2.5 Micro-LLM Neural Reasoning Fallback for Conceptual & Verbal Inquiries
+    if re.search(r'\b(?:explain|concept|theory|meaning|why does|how does|define|overview|derivation)\b', q, flags=re.I):
+        llm_res = solve_with_llm(raw_query)
+        if llm_res:
+            return llm_res
+
     # 3. SymPy general symbolic expression evaluator fallback
     try:
         expr = safe_parse(normalize_query(q))
@@ -329,6 +368,11 @@ def _solve_query_impl(raw_query: str) -> Dict[str, Any]:
         }
     except Exception:
         pass
+
+    # 4. Neural Micro-LLM Final Attempt (SmolLM2-135M)
+    llm_res = solve_with_llm(raw_query)
+    if llm_res:
+        return llm_res
 
     return {
         "title": "General Query",

@@ -105,7 +105,7 @@ def detect_intent(text: str) -> str:
         return "STATISTICS"
 
     # 7. Geometry & Mensuration (2D & 3D Shapes)
-    if re.search(r'\b(?:sphere|cylinder|cone|cuboid|cube|ellipse|trapezoid|trapezium|hypotenuse|pythagoras|pythagorean|samkon|circle|radius|diameter|hemisphere|circumference|surface area|volume|slant height)\b', q):
+    if (re.search(r'\b(?:sphere|cylinder|cone|cuboid|ellipse|trapezoid|trapezium|hypotenuse|pythagoras|pythagorean|samkon|circle|radius|diameter|hemisphere|circumference|surface area|volume|slant height)\b', q) or (re.search(r'\bcube\b', q) and not re.search(r'\b(?:whole\s*cube|ka\s*cube)\b', q))) and not re.search(r'\bwhole\s*(?:square|cube)\b', q):
         return "GEOMETRY"
 
     # 8. Quantitative Aptitude & Word Problems

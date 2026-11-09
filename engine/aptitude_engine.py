@@ -31,6 +31,8 @@ def fmt_curr(n: float) -> str:
 def solve_train_problem(query: str) -> Optional[Dict[str, Any]]:
     """Solves train crossing problems, relative speeds, and platform lengths."""
     q = normalize_query(query).lower()
+    if not re.search(r'\b(?:train|trains|railgadi|platform|pole|bridge|speed|relative speed|opposite direction|same direction)\b', q):
+        return None
     nums = extract_numbers(q)
     if len(nums) < 2:
         return None
@@ -101,6 +103,8 @@ def solve_train_problem(query: str) -> Optional[Dict[str, Any]]:
 def solve_time_work(query: str) -> Optional[Dict[str, Any]]:
     """Solves individual & collective work problems, pipe filling/emptying."""
     q = normalize_query(query).lower()
+    if not re.search(r'\b(?:work|kaam|together|milkar|alone|pipe|pipes|cistern|tank|tanki|nal|days?|din|hours?|ghante)\b', q):
+        return None
     nums = extract_numbers(q)
     if len(nums) < 2:
         return None
@@ -166,6 +170,8 @@ def solve_time_work(query: str) -> Optional[Dict[str, Any]]:
 def solve_profit_loss(query: str) -> Optional[Dict[str, Any]]:
     """Calculates profit, loss, cost price, selling price, and discounts."""
     q = normalize_query(query).lower()
+    if not re.search(r'\b(?:profit|loss|gain|cost price|selling price|marked price|markup|margin|discount|successive|cp|sp|mp|khareeda|becha|faida|nuksan|chhut)\b', q):
+        return None
     nums = extract_numbers(q)
     if len(nums) < 2:
         return None

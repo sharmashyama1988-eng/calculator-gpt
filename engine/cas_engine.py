@@ -37,12 +37,34 @@ def safe_parse(expr_str: str) -> sp.Expr:
 
 
 def format_sympy_res(expr: Any) -> str:
-    """Formats a SymPy expression into clean readable mathematical text."""
+    """Formats a SymPy expression into clean, comfortable, user-oriented textbook algebra."""
     s = str(expr)
-    s = s.replace('**2', '²').replace('**3', '³').replace('**', '^')
-    s = s.replace('*', ' · ')
-    return s
-
+    # 1. Superscript powers
+    s = s.replace('**2', '²').replace('**3', '³').replace('**4', '⁴').replace('**5', '⁵').replace('**', '^')
+    
+    # 2. Implicit multiplication between numbers and variables (e.g. 2*a -> 2a, 12*x -> 12x)
+    s = re.sub(r'(\d)\s*\*\s*([a-zA-Z])', r'\g<1>\g<2>', s)
+    
+    # 3. Implicit multiplication between variables / powers (e.g. a*b -> ab, a²*b -> a²b, x*y -> xy)
+    for _ in range(3):
+        s = re.sub(r'([a-zA-Z²³⁴⁵^0-9])\s*\*\s*([a-zA-Z])', r'\g<1>\g<2>', s)
+        
+    # 4. Implicit multiplication around parentheses: (a - b)*(a + b) -> (a - b)(a + b), 2*(x + y) -> 2(x + y)
+    s = re.sub(r'\)\s*\*\s*\(', r')(', s)
+    s = re.sub(r'([a-zA-Z0-9²³⁴⁵])\s*\*\s*\(', r'\g<1>(', s)
+    s = re.sub(r'\)\s*\*\s*([a-zA-Z0-9])', r')\g<1>', s)
+    
+    # 5. Remaining * between plain numbers becomes standard ×
+    s = re.sub(r'(\d)\s*\*\s*(\d)', r'\g<1> × \g<2>', s)
+    
+    # 6. Any other stray * is cleaned up
+    s = s.replace('*', '')
+    
+    # 7. Comfortable spacing around operators
+    s = re.sub(r'\s*\+\s*', ' + ', s)
+    s = re.sub(r'(?<=\w)\s*-\s*(?=\w)', ' − ', s)
+    s = s.replace('I', 'i')
+    return s.strip()
 
 # ==============================================================================
 # 1. CALCULUS: DERIVATIVES (Step-by-Step Derivation)
@@ -353,12 +375,28 @@ def solve_equation(query: str) -> Dict[str, Any]:
 # 5. ALGEBRA: EXPANSION & FACTORIZATION
 # ==============================================================================
 def solve_expansion(query: str) -> Dict[str, Any]:
-    """Expands polynomials and algebraic products like (a + b)^2, (2x - 3)^3."""
-    q = query.replace('−', '-')
-    cleaned = re.sub(r'.*?(?:expand|expansion of|whole square|whole cube)\s*', '', q, flags=re.I)
-    cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
+    """Expands polynomials and algebraic products like (a + b)^2, (2x - 3)^3, a+b whole square."""
+    q = query.replace('−', '-').replace('–', '-')
+    q_work = re.sub(r'^(?:what is (?:the )?|find (?:the )?|tell me (?:the )?|calculate (?:the )?|give (?:me )?|formula (?:of|for|ka) )+', '', q, flags=re.I).strip()
+    q_work = re.sub(r'(?:formula|batao|kya hai|kya hoga|likho)[?.]*$', '', q_work, flags=re.I).strip()
+    q_work = re.sub(r'plus', '+', q_work, flags=re.I)
+    q_work = re.sub(r'minus', '-', q_work, flags=re.I)
     
-    expr = safe_parse(cleaned)
+    m_sq = re.match(r'^(?:expand\s+)?\(?([a-zA-Z0-9\s+\-*\/]+?)\)?\s*(?:ka\s+)?(?:whole\s*square|whole\s*sq|square)\s*$', q_work, flags=re.I)
+    m_cu = re.match(r'^(?:expand\s+)?\(?([a-zA-Z0-9\s+\-*\/]+?)\)?\s*(?:ka\s+)?(?:whole\s*cube|cube)\s*$', q_work, flags=re.I)
+    
+    if m_sq and ('+' in m_sq.group(1) or '-' in m_sq.group(1)):
+        inner = m_sq.group(1).strip()
+        expr_str = f"({inner})**2"
+    elif m_cu and ('+' in m_cu.group(1) or '-' in m_cu.group(1)):
+        inner = m_cu.group(1).strip()
+        expr_str = f"({inner})**3"
+    else:
+        cleaned = re.sub(r'.*?(?:expand|expansion of)\s*', '', q_work, flags=re.I)
+        cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
+        expr_str = cleaned if cleaned else q_work
+
+    expr = safe_parse(expr_str)
     expanded = expand(expr)
     
     steps = [
@@ -577,7 +615,9 @@ def solve_matrix(query: str) -> Optional[Dict[str, Any]]:
 # ==============================================================================
 def solve_series(query: str) -> Optional[Dict[str, Any]]:
     """Generates Taylor or Maclaurin series expansion of a function."""
-    q = query.replace('−', '-')
+    q = query.replace('−', '-').replace('–', '-')
+    if not re.search(r'(?:taylor|maclaurin|power series|series of|series expansion)', q, flags=re.I):
+        return None
     cleaned = re.sub(r'.*?(?:taylor series|maclaurin series|series expansion of|series of)\s*', '', q, flags=re.I)
     cleaned = re.sub(r'\s*(?:around|about|at)\s*.*', '', cleaned, flags=re.I)
     cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
@@ -615,6 +655,8 @@ def solve_series(query: str) -> Optional[Dict[str, Any]]:
 def solve_optimization(query: str) -> Optional[Dict[str, Any]]:
     """Calculates local extrema (minima/maxima), critical points, and inflection points."""
     q = query.replace('−', '-')
+    if not re.search(r'\b(?:extrema|maximum|maxima|minimum|minima|inflection|critical points?|optimization)\b', q, re.I):
+        return None
     cleaned = re.sub(r'.*?(?:find\s*)?(?:local\s*)?(?:extrema|maximum and minimum|maxima and minima|maximum|maxima|minimum|minima|critical points|inflection points|optimization)\s*(?:of|for)?\s*', '', q, flags=re.I)
     cleaned = re.sub(r'^[fF]\s*\([a-zA-Z]\)\s*=\s*', '', cleaned)
     cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
@@ -700,6 +742,9 @@ def solve_optimization(query: str) -> Optional[Dict[str, Any]]:
 def solve_complex(query: str) -> Optional[Dict[str, Any]]:
     """Analyzes complex numbers: modulus, argument, conjugate, polar and exponential forms."""
     q = query.replace('−', '-')
+    is_kw = bool(re.search(r'\b(?:modulus and argument|polar form|conjugate of|complex number|modulus of|argument of|arg of)\b', q, re.I))
+    if not is_kw and not re.search(r'\b\d*\s*[*+-]?\s*\d*\s*[iI]\b', q):
+        return None
     cleaned = re.sub(r'.*?(?:modulus and argument of|polar form of|conjugate of|complex number|modulus of|argument of|arg of)\s*', '', q, flags=re.I)
     cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
     
@@ -767,6 +812,8 @@ def solve_complex(query: str) -> Optional[Dict[str, Any]]:
 def solve_ode(query: str) -> Optional[Dict[str, Any]]:
     """Solves 1st order ordinary differential equations (ODEs) with SymPy dsolve."""
     q = query.replace('−', '-')
+    if not re.search(r'\b(?:differential equation|ode|dsolve|dy/dx)\b', q, re.I) and not re.search(r"\by'\b", q):
+        return None
     
     # Extract initial conditions e.g. "with y(0) = 1" or "y(0) = 2"
     ics = {}
