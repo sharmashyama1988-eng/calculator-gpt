@@ -1,6 +1,7 @@
 """Master Mathematical & Aptitude Reasoning Orchestrator for Calculator GPT.
-Routes queries to specialized CAS, Aptitude, Statistics, and Discrete Math solvers.
-Generates humanized AI-like step-by-step proofs and derivations.
+Routes queries to specialized CAS, Geometry, Aptitude, Statistics, and Discrete Math solvers.
+Generates humanized AI-like step-by-step proofs, formulas, tabular breakdown rows, and insights.
+100% Offline, Pure Python & SymPy algorithms.
 """
 
 import re
@@ -12,10 +13,16 @@ from .nlp_parser import normalize_query, detect_intent, extract_numbers
 from .cas_engine import (
     solve_derivative, solve_integral, solve_limit,
     solve_equation, solve_expansion, solve_factorization,
-    solve_matrix, solve_series, safe_parse, format_sympy_res
+    solve_matrix, solve_series, solve_optimization, solve_complex,
+    solve_ode, safe_parse, format_sympy_res
 )
+from .geometry_engine import solve_geometry
 from .aptitude_engine import (
     solve_train_problem, solve_time_work, solve_profit_loss, solve_interest, fmt, fmt_curr
+)
+from .aptitude_advanced import (
+    solve_boat_stream, solve_pipe_cistern, solve_mixture_alligation,
+    solve_probability, solve_profit_loss_advanced
 )
 from .stats_engine import solve_statistics
 from .universal_solver import (
@@ -158,64 +165,15 @@ def solve_number_theory(query: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def solve_geometry(query: str) -> Optional[Dict[str, Any]]:
-    """Calculates geometric properties (Circles, Cylinders, Triangles, Cones, Spheres)."""
-    import math
-    q = normalize_query(query).lower()
-    nums = extract_numbers(q)
-    
-    # Circle
-    if 'circle' in q and len(nums) >= 1:
-        r = nums[0]
-        area = math.pi * r * r
-        circ = 2 * math.pi * r
-        return {
-            "title": f"Circle Geometry (Radius r = {r})",
-            "summary_value": f"Area = {area:.2f} · Circumference = {circ:.2f}",
-            "formula": "Area = πr²,  Circumference = 2πr",
-            "rows": [
-                ["Area (πr²)", f"{area:.3f}"],
-                ["Circumference (2πr)", f"{circ:.3f}"],
-                ["Radius (r)", str(r)],
-                ["Diameter (2r)", str(2 * r)]
-            ],
-            "steps": [
-                f"Radius given: r = {r}",
-                f"Area = π × {r}² = {math.pi:.4f} × {r*r} = {area:.4f}",
-                f"Circumference = 2 × π × {r} = {circ:.4f}"
-            ],
-            "insights": "The ratio of a circle's circumference to its diameter is the universal constant π ≈ 3.14159.",
-            "raw": area
-        }
+import collections
+import copy
 
-    # Pythagoras / Hypotenuse
-    if re.search(r'hypotenuse|pythagoras|right triangle', q) and len(nums) >= 2:
-        a, b = nums[0], nums[1]
-        c = math.hypot(a, b)
-        return {
-            "title": "Right Triangle Hypotenuse (Pythagorean Theorem)",
-            "summary_value": f"Hypotenuse c = {c:.2f}",
-            "formula": "c = √(a² + b²)",
-            "rows": [
-                ["Hypotenuse (c)", f"{c:.3f}"],
-                ["Base (a)", str(a)],
-                ["Perpendicular (b)", str(b)],
-                ["Area of Triangle", f"{(a * b) / 2:.2f}"]
-            ],
-            "steps": [
-                f"Given legs: a = {a}, b = {b}",
-                f"Apply Pythagoras: c² = a² + b² = {a}² + {b}² = {a*a} + {b*b} = {a*a + b*b}",
-                f"Take square root: c = √({a*a + b*b}) = {c:.4f}"
-            ],
-            "insights": "In any Euclidean right-angled triangle, the area of the square on the hypotenuse equals the sum of areas of squares on the other two legs.",
-            "raw": c
-        }
-
-    return None
+_QUERY_CACHE = collections.OrderedDict()
+_MAX_CACHE_SIZE = 1024
 
 
 def solve_query(raw_query: str) -> Dict[str, Any]:
-    """Master single query solver using intent routing, SymPy CAS, and aptitude engines."""
+    """Master single query solver with LRU caching, intent routing, SymPy CAS, Geometry, and Aptitude engines."""
     if not raw_query or not raw_query.strip():
         return {
             "title": "Empty Query",
@@ -227,12 +185,61 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
             "raw": None
         }
 
+    cache_key = raw_query.strip().lower()
+    if cache_key in _QUERY_CACHE:
+        _QUERY_CACHE.move_to_end(cache_key)
+        return copy.deepcopy(_QUERY_CACHE[cache_key])
+
+    res = _solve_query_impl(raw_query)
+    if len(_QUERY_CACHE) >= _MAX_CACHE_SIZE:
+        _QUERY_CACHE.popitem(last=False)
+    _QUERY_CACHE[cache_key] = copy.deepcopy(res)
+    return res
+
+
+def _solve_query_impl(raw_query: str) -> Dict[str, Any]:
     q = raw_query.strip()
     intent = detect_intent(q)
     
-    # Intent-based routing with safe fallbacks
+    # 1. Intent-based routing with safe execution
     try:
-        if intent == "CALCULUS_DERIVATIVE":
+        if intent == "DIFFERENTIAL_EQUATION":
+            res = solve_ode(q)
+            if res:
+                return res
+        elif intent == "OPTIMIZATION_EXTREMA":
+            res = solve_optimization(q)
+            if res:
+                return res
+        elif intent == "COMPLEX_NUMBERS":
+            res = solve_complex(q)
+            if res:
+                return res
+        elif intent == "MATRIX_OPERATIONS":
+            res = solve_matrix(q)
+            if res:
+                return res
+        elif intent == "GEOMETRY":
+            res = solve_geometry(q)
+            if res:
+                return res
+        elif intent == "APTITUDE_BOAT":
+            res = solve_boat_stream(q)
+            if res:
+                return res
+        elif intent == "APTITUDE_PIPE":
+            res = solve_pipe_cistern(q) or solve_time_work(q)
+            if res:
+                return res
+        elif intent == "APTITUDE_MIXTURE":
+            res = solve_mixture_alligation(q)
+            if res:
+                return res
+        elif intent == "PROBABILITY":
+            res = solve_probability(q) or solve_number_theory(q)
+            if res:
+                return res
+        elif intent == "CALCULUS_DERIVATIVE":
             return solve_derivative(q)
         elif intent == "CALCULUS_INTEGRAL":
             return solve_integral(q)
@@ -249,7 +256,7 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
             if res:
                 return res
         elif intent == "APTITUDE_TIME_WORK":
-            res = solve_universal_chain_work(q) or solve_time_work(q)
+            res = solve_universal_chain_work(q) or solve_pipe_cistern(q) or solve_time_work(q)
             if res:
                 return res
         elif intent == "APTITUDE_AGE":
@@ -257,7 +264,7 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
             if res:
                 return res
         elif intent == "APTITUDE_PROFIT_LOSS":
-            res = solve_profit_loss(q)
+            res = solve_profit_loss_advanced(q) or solve_profit_loss(q)
             if res:
                 return res
         elif intent in ("APTITUDE_EMI", "APTITUDE_CI", "APTITUDE_SI"):
@@ -272,23 +279,18 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
             res = solve_number_theory(q)
             if res:
                 return res
-        elif intent == "MATRIX_OPERATIONS":
-            res = solve_matrix(q)
-            if res:
-                return res
-        elif intent == "GEOMETRY":
-            res = solve_geometry(q)
-            if res:
-                return res
-    except Exception as e:
-        # Fall through to general solver
+    except Exception:
+        # Fall through to universal solver sweep
         pass
 
-    # Universal physical & algebraic solver sweep (Handles ANY unseen dynamic problem)
+    # 2. Universal physical, algebraic, and aptitude sweep (Handles ANY dynamic query)
     for solver in [
+        solve_ode, solve_optimization, solve_complex, solve_matrix,
+        solve_geometry, solve_boat_stream, solve_pipe_cistern,
+        solve_mixture_alligation, solve_probability, solve_profit_loss_advanced,
         solve_universal_motion, solve_universal_age, solve_universal_chain_work,
-        solve_matrix, solve_series, solve_train_problem, solve_time_work, solve_profit_loss,
-        solve_interest, solve_statistics, solve_number_theory, solve_geometry
+        solve_train_problem, solve_time_work, solve_profit_loss,
+        solve_interest, solve_statistics, solve_number_theory, solve_series
     ]:
         try:
             r = solver(q)
@@ -297,7 +299,7 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
         except Exception:
             continue
 
-    # SymPy general expression evaluator fallback
+    # 3. SymPy general symbolic expression evaluator fallback
     try:
         expr = safe_parse(normalize_query(q))
         simplified = sp.simplify(expr)
@@ -333,8 +335,8 @@ def solve_query(raw_query: str) -> Dict[str, Any]:
         "summary_value": "Could not parse query",
         "formula": "",
         "rows": [["Input", raw_query]],
-        "steps": ["Try phrasing as an equation (e.g., 'solve 2x^2 + 5x - 3 = 0'), stats ('mean of 10, 15, 20'), or train problem."],
-        "insights": "Calculator GPT supports algebra, calculus, train speed, time & work, statistics, and financial math.",
+        "steps": ["Try phrasing as an equation (e.g., 'solve 2x^2 + 5x - 3 = 0'), stats ('mean of 10, 15, 20'), geometry ('volume of cylinder radius 5 height 10'), or aptitude problem ('boat travels 24 km upstream in 4 hours')."],
+        "insights": "Calculator GPT supports geometry, boats & streams, pipes, mixtures, probability, linear algebra, complex numbers, ODEs, and commercial math.",
         "raw": None
     }
 

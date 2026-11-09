@@ -72,7 +72,7 @@ class ApiRequestHandler(SimpleHTTPRequestHandler):
                 body = json.loads(post_data)
                 query = body.get('q', '')
                 results = process_all_queries(query)
-                response = json.dumps({"status": "success", "results": results})
+                response = json.dumps({"status": "success", "results": results}, separators=(',', ':'))
             except Exception as e:
                 response = json.dumps({"status": "error", "message": str(e), "results": []})
 
@@ -91,7 +91,7 @@ class ApiRequestHandler(SimpleHTTPRequestHandler):
             query = params.get('q', [''])[0]
             try:
                 results = process_all_queries(query)
-                response = json.dumps({"status": "success", "results": results})
+                response = json.dumps({"status": "success", "results": results}, separators=(',', ':'))
             except Exception as e:
                 response = json.dumps({"status": "error", "message": str(e), "results": []})
 

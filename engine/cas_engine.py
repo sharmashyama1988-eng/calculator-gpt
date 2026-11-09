@@ -8,7 +8,9 @@ import sympy as sp
 from sympy import (
     Symbol, symbols, diff, integrate, limit, solve, factor, expand,
     simplify, Matrix, latex, Eq, Rational, oo, pi, E, sqrt, sin, cos, tan,
-    log, exp, Abs, nsimplify
+    log, exp, Abs, nsimplify, Function, Derivative, dsolve, classify_ode,
+    re as sym_re, im as sym_im, arg as sym_arg, conjugate as sym_conjugate,
+    deg as sym_deg, I
 )
 from sympy.parsing.sympy_parser import (
     parse_expr, standard_transformations,
@@ -26,6 +28,11 @@ def safe_parse(expr_str: str) -> sp.Expr:
     
     # Common function cleanups
     s = re.sub(r'\bln\b', 'log', s)
+    # Support imaginary unit i: e.g. 3i -> 3*I, 4*i -> 4*I, bare i -> I
+    s = re.sub(r'(?<=\d)i\b', '*I', s)
+    s = re.sub(r'(?<=[+-/*(])\s*i\b', 'I', s)
+    s = re.sub(r'\bi(?=[+-/*)])', 'I', s)
+    s = re.sub(r'^i$', 'I', s)
     return parse_expr(s, transformations=TRANSFORMS)
 
 
@@ -405,14 +412,14 @@ def solve_factorization(query: str) -> Dict[str, Any]:
 # 6. LINEAR ALGEBRA: MATRICES
 # ==============================================================================
 def solve_matrix(query: str) -> Optional[Dict[str, Any]]:
-    """Calculates matrix determinant, inverse, trace, and eigenvalues."""
+    """Calculates matrix determinant, inverse, trace, eigenvalues, and eigenvectors."""
     import ast
     q = query.replace('−', '-')
     
     # Try finding matrix literal [[1, 2], [3, 4]]
     m_match = re.search(r'\[\[.*?\]\]', q)
     if not m_match:
-        # Try finding semicolon notation [1 2; 3 4]
+        # Try finding semicolon notation [1 2; 3 4] or [1, 2; 3, 4]
         semi_match = re.search(r'\[([0-9\s,;.-]+)\]', q)
         if semi_match and ';' in semi_match.group(1):
             rows_raw = semi_match.group(1).split(';')
@@ -428,6 +435,93 @@ def solve_matrix(query: str) -> Optional[Dict[str, Any]]:
             mat_data = ast.literal_eval(m_match.group(0))
         except Exception:
             return None
+
+    try:
+        M = Matrix(mat_data)
+        rows, cols = M.shape
+        det_val = None
+        inv_str = "Non-invertible (Singular)"
+        
+        is_eigs_query = bool(re.search(r'\b(?:eigenvalues?|eigenvectors?|characteristic)\b', q, re.I))
+        
+        steps = [
+            f"Input Matrix dimensions: {rows} × {cols}",
+            f"Matrix M = {M.tolist()}"
+        ]
+        
+        card_rows = [
+            ["Matrix Dimensions", f"{rows} × {cols}"],
+            ["Rank of Matrix", str(M.rank())],
+            ["Transpose (Mᵀ)", str(M.T.tolist())]
+        ]
+        
+        eig_summary = ""
+        trace_val = None
+        
+        if rows == cols:
+            det_val = M.det()
+            trace_val = M.trace()
+            card_rows.insert(0, ["Determinant (det M)", format_sympy_res(det_val)])
+            card_rows.insert(1, ["Trace (Tr M)", format_sympy_res(trace_val)])
+            steps.append(f"Determinant det(M) = {format_sympy_res(det_val)}")
+            steps.append(f"Trace (Sum of main diagonal) = {format_sympy_res(trace_val)}")
+            
+            if det_val != 0:
+                inv_M = M.inv()
+                inv_str = str(inv_M.tolist())
+                card_rows.append(["Inverse Matrix M⁻¹", inv_str])
+                steps.append(f"Invertible because det(M) ≠ 0. Inverse M⁻¹ = {inv_str}")
+            else:
+                card_rows.append(["Inverse Matrix M⁻¹", "Singular / Non-invertible (det = 0)"])
+                steps.append("Matrix is singular (det = 0); inverse does not exist.")
+                
+            if rows <= 4:
+                # Characteristic Polynomial
+                lam = Symbol('λ')
+                char_poly = M.charpoly(lam).as_expr()
+                card_rows.append(["Characteristic Polynomial", format_sympy_res(char_poly) + " = 0"])
+                steps.append(f"Characteristic Equation det(M − λI) = {format_sympy_res(char_poly)} = 0")
+                
+                # Eigenvalues
+                eigs = M.eigenvals()
+                eig_list = []
+                for k, v in eigs.items():
+                    eig_list.append(f"λ = {format_sympy_res(k)} (multiplicity {v})")
+                eig_summary = ", ".join(eig_list)
+                card_rows.append(["Eigenvalues (λ)", eig_summary])
+                steps.append(f"Eigenvalues: {eig_summary}")
+                
+                # Eigenvectors
+                try:
+                    vects = M.eigenvects()
+                    vect_descs = []
+                    for val, mult, bas in vects:
+                        bas_strs = [str(b.T.tolist()[0]) for b in bas]
+                        vect_descs.append(f"λ = {format_sympy_res(val)}: Basis {bas_strs}")
+                    card_rows.append(["Eigenvectors Basis", "; ".join(vect_descs)])
+                    steps.append("Eigenvector Eigenspaces: " + "; ".join(vect_descs))
+                except Exception:
+                    pass
+
+        summary_title = "Eigenvalues & Linear Algebra" if is_eigs_query else f"Matrix Linear Algebra ({rows}×{cols})"
+        if is_eigs_query and rows == cols and eig_summary:
+            summary_val = eig_summary
+        elif det_val is not None:
+            summary_val = f"det(M) = {format_sympy_res(det_val)} · Tr = {format_sympy_res(trace_val)}"
+        else:
+            summary_val = f"{rows}×{cols} Matrix"
+
+        return {
+            "title": summary_title,
+            "summary_value": summary_val,
+            "formula": "det(M),  M⁻¹ = (1/det(M)) · adj(M),  det(M − λI) = 0",
+            "rows": card_rows,
+            "steps": steps,
+            "insights": "Eigenvalues characterize the scalar factors by which eigenvectors are stretched or flipped under the linear transformation M.",
+            "raw": float(det_val) if det_val is not None and det_val.is_number else None
+        }
+    except Exception:
+        return None
 
     try:
         M = Matrix(mat_data)
@@ -513,3 +607,245 @@ def solve_series(query: str) -> Optional[Dict[str, Any]]:
     except Exception:
         return None
 
+
+
+# ==============================================================================
+# 8. EXTREMA & OPTIMIZATION (Local Minima, Maxima & Inflection Points)
+# ==============================================================================
+def solve_optimization(query: str) -> Optional[Dict[str, Any]]:
+    """Calculates local extrema (minima/maxima), critical points, and inflection points."""
+    q = query.replace('−', '-')
+    cleaned = re.sub(r'.*?(?:find\s*)?(?:local\s*)?(?:extrema|maximum and minimum|maxima and minima|maximum|maxima|minimum|minima|critical points|inflection points|optimization)\s*(?:of|for)?\s*', '', q, flags=re.I)
+    cleaned = re.sub(r'^[fF]\s*\([a-zA-Z]\)\s*=\s*', '', cleaned)
+    cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
+    
+    try:
+        expr = safe_parse(cleaned)
+        free = list(expr.free_symbols)
+        x = free[0] if free else Symbol('x')
+        
+        # Derivatives
+        df = diff(expr, x)
+        d2f = diff(expr, x, 2)
+        
+        # Critical points: f'(x) = 0
+        crit_raw = solve(df, x)
+        crit_points = [c for c in crit_raw if c.is_real or c.is_number]
+        
+        steps = [
+            f"Given function: f({x.name}) = {format_sympy_res(expr)}",
+            f"Step 1: Compute first derivative: f'({x.name}) = {format_sympy_res(df)}",
+            f"Step 2: Solve f'({x.name}) = 0 for critical points: {format_sympy_res(df)} = 0 ⟹ {x.name} = {[format_sympy_res(c) for c in crit_points]}",
+            f"Step 3: Compute second derivative: f''({x.name}) = {format_sympy_res(d2f)}"
+        ]
+        
+        card_rows = [
+            ["Original Function f(x)", format_sympy_res(expr)],
+            ["First Derivative f'(x)", format_sympy_res(df)],
+            ["Second Derivative f''(x)", format_sympy_res(d2f)]
+        ]
+        
+        extrema_summary = []
+        minima = []
+        maxima = []
+        saddles = []
+        
+        for c in crit_points:
+            f_val = expr.subs(x, c)
+            sec_val = d2f.subs(x, c)
+            
+            # Classification
+            if sec_val > 0:
+                minima.append((c, f_val))
+                extrema_summary.append(f"Local Min at ({format_sympy_res(c)}, {format_sympy_res(f_val)})")
+                steps.append(f"At {x.name} = {format_sympy_res(c)}: f''({format_sympy_res(c)}) = {format_sympy_res(sec_val)} > 0 ⟹ Local Minimum with value {format_sympy_res(f_val)}")
+                card_rows.append([f"Local Minimum at {x.name}={format_sympy_res(c)}", f"({format_sympy_res(c)}, {format_sympy_res(f_val)})"])
+            elif sec_val < 0:
+                maxima.append((c, f_val))
+                extrema_summary.append(f"Local Max at ({format_sympy_res(c)}, {format_sympy_res(f_val)})")
+                steps.append(f"At {x.name} = {format_sympy_res(c)}: f''({format_sympy_res(c)}) = {format_sympy_res(sec_val)} < 0 ⟹ Local Maximum with value {format_sympy_res(f_val)}")
+                card_rows.append([f"Local Maximum at {x.name}={format_sympy_res(c)}", f"({format_sympy_res(c)}, {format_sympy_res(f_val)})"])
+            else:
+                saddles.append((c, f_val))
+                extrema_summary.append(f"Stationary/Inconclusive at {x.name}={format_sympy_res(c)}")
+                steps.append(f"At {x.name} = {format_sympy_res(c)}: f''({format_sympy_res(c)}) = 0 ⟹ Second derivative test inconclusive (Possible saddle or higher inflection)")
+                card_rows.append([f"Stationary Point at {x.name}={format_sympy_res(c)}", f"({format_sympy_res(c)}, {format_sympy_res(f_val)})"])
+
+        # Inflection points: f''(x) = 0
+        infl_raw = solve(d2f, x)
+        infl_points = [p for p in infl_raw if p.is_real or p.is_number]
+        if infl_points:
+            infl_str = ", ".join([f"({format_sympy_res(p)}, {format_sympy_res(expr.subs(x, p))})" for p in infl_points])
+            card_rows.append(["Inflection Points (f''=0)", infl_str])
+            steps.append(f"Step 4: Solve f''({x.name}) = 0 for inflection points: {infl_str}")
+            
+        summary_val = " · ".join(extrema_summary) if extrema_summary else f"No real local extrema; Inflection points: {len(infl_points)}"
+        
+        return {
+            "title": "Extrema & Optimization (Minima, Maxima & Inflection)",
+            "summary_value": summary_val,
+            "formula": "Critical: f'(x) = 0;  Min: f''(x) > 0;  Max: f''(x) < 0;  Inflection: f''(x) = 0",
+            "rows": card_rows,
+            "steps": steps,
+            "insights": "The Second Derivative Test classifies critical points: positive curvature indicates concave up (minimum), negative curvature indicates concave down (maximum).",
+            "raw": float(maxima[0][1]) if maxima and maxima[0][1].is_number else (float(minima[0][1]) if minima and minima[0][1].is_number else None)
+        }
+    except Exception:
+        return None
+
+
+# ==============================================================================
+# 9. COMPLEX NUMBERS (Modulus, Argument, Conjugate & Polar Form)
+# ==============================================================================
+def solve_complex(query: str) -> Optional[Dict[str, Any]]:
+    """Analyzes complex numbers: modulus, argument, conjugate, polar and exponential forms."""
+    q = query.replace('−', '-')
+    cleaned = re.sub(r'.*?(?:modulus and argument of|polar form of|conjugate of|complex number|modulus of|argument of|arg of)\s*', '', q, flags=re.I)
+    cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
+    
+    try:
+        expr = safe_parse(cleaned)
+        z = simplify(expr)
+        
+        # Real and imaginary components
+        a = sym_re(z)
+        b = sym_im(z)
+        
+        # Modulus and argument
+        mod_val = Abs(z)
+        arg_val = sym_arg(z)
+        conj_val = sym_conjugate(z)
+        
+        try:
+            deg_val = float(arg_val.evalf() * 180 / pi.evalf())
+        except Exception:
+            deg_val = 0.0
+            
+        try:
+            mod_float = float(mod_val.evalf())
+        except Exception:
+            mod_float = None
+            
+        polar_trig = f"{format_sympy_res(mod_val)} · (cos({format_sympy_res(arg_val)}) + i · sin({format_sympy_res(arg_val)}))"
+        polar_exp = f"{format_sympy_res(mod_val)} · e^(i · {format_sympy_res(arg_val)})"
+        
+        steps = [
+            f"Given complex expression: z = {format_sympy_res(expr)}",
+            f"Step 1: Simplify into standard rectangular form (a + bi): z = {format_sympy_res(z)}",
+            f"Step 2: Real part Re(z) = {format_sympy_res(a)}, Imaginary part Im(z) = {format_sympy_res(b)}",
+            f"Step 3: Modulus |z| = √(a² + b²) = √(({format_sympy_res(a)})² + ({format_sympy_res(b)})²) = {format_sympy_res(mod_val)}" + (f" ≈ {mod_float:.4f}" if mod_float is not None else ""),
+            f"Step 4: Argument θ = atan2(b, a) = {format_sympy_res(arg_val)} radians ({deg_val:.2f}°)",
+            f"Step 5: Complex Conjugate z̄ = a − bi = {format_sympy_res(conj_val)}",
+            f"Step 6: Polar Exponential Form: z = r · e^(iθ) = {polar_exp}"
+        ]
+        
+        return {
+            "title": "Complex Number Analysis (Modulus, Argument & Polar Form)",
+            "summary_value": f"|z| = {format_sympy_res(mod_val)} · Arg(z) = {format_sympy_res(arg_val)} ({deg_val:.1f}°) · z̄ = {format_sympy_res(conj_val)}",
+            "formula": "z = a + bi,  |z| = √(a² + b²),  Arg(z) = atan2(b, a),  z = r·e^(iθ)",
+            "rows": [
+                ["Rectangular Form (a + bi)", format_sympy_res(z)],
+                ["Modulus |z| (Distance from origin)", f"{format_sympy_res(mod_val)}" + (f" (≈ {mod_float:.4f})" if mod_float else "")],
+                ["Argument θ (Angle in radians)", f"{format_sympy_res(arg_val)} rad ({deg_val:.2f}°)"],
+                ["Complex Conjugate (z̄)", format_sympy_res(conj_val)],
+                ["Real Part Re(z)", format_sympy_res(a)],
+                ["Imaginary Part Im(z)", format_sympy_res(b)],
+                ["Polar Exponential Form", polar_exp],
+                ["Trigonometric Form", polar_trig]
+            ],
+            "steps": steps,
+            "insights": "In the Argand complex plane, the modulus is Euclidean distance to the origin and the argument is the counter-clockwise angle from the positive real axis.",
+            "raw": mod_float
+        }
+    except Exception:
+        return None
+
+
+# ==============================================================================
+# 10. DIFFERENTIAL EQUATIONS (1st Order ODEs via SymPy dsolve)
+# ==============================================================================
+def solve_ode(query: str) -> Optional[Dict[str, Any]]:
+    """Solves 1st order ordinary differential equations (ODEs) with SymPy dsolve."""
+    q = query.replace('−', '-')
+    
+    # Extract initial conditions e.g. "with y(0) = 1" or "y(0) = 2"
+    ics = {}
+    ic_m = re.search(r'y\s*\(\s*([-+]?\d*\.?\d+)\s*\)\s*=\s*([-+]?\d*\.?\d+)', q)
+    if ic_m:
+        x0_val = float(ic_m.group(1))
+        y0_val = float(ic_m.group(2))
+        x0_sym = int(x0_val) if x0_val.is_integer() else x0_val
+        y0_sym = int(y0_val) if y0_val.is_integer() else y0_val
+    else:
+        x0_sym, y0_sym = None, None
+        
+    cleaned = re.sub(r'.*?(?:solve\s*)?(?:differential equation|ode)\s*', '', q, flags=re.I)
+    cleaned = re.sub(r'\s*(?:with|where|given)\s*y\s*\(\s*[-+]?\d*\.?\d+\s*\)\s*=\s*[-+]?\d*\.?\d+.*', '', cleaned, flags=re.I)
+    cleaned = re.sub(r'[?.,]$', '', cleaned).strip()
+    
+    try:
+        x = Symbol('x')
+        y = Function('y')
+        
+        # Prepare ODE string
+        # Replace dy/dx or y' with Derivative(y(x), x)
+        ode_s = cleaned
+        ode_s = re.sub(r'\bdy/dx\b', 'Derivative(y(x), x)', ode_s)
+        ode_s = re.sub(r"\by'\b", 'Derivative(y(x), x)', ode_s)
+        # Replace bare y with y(x) when not y(
+        ode_s = re.sub(r'\by\b(?!\s*\()', 'y(x)', ode_s)
+        
+        if '=' in ode_s:
+            parts = ode_s.split('=')
+            lhs_str, rhs_str = parts[0].strip(), parts[1].strip()
+        else:
+            lhs_str, rhs_str = ode_s.strip(), '0'
+            
+        local_dict = {'x': x, 'y': y, 'Derivative': Derivative, 'exp': exp, 'sin': sin, 'cos': cos, 'tan': tan, 'log': log}
+        lhs_expr = parse_expr(lhs_str.replace('^', '**').replace('×', '*').replace('÷', '/'), local_dict=local_dict, transformations=TRANSFORMS)
+        rhs_expr = parse_expr(rhs_str.replace('^', '**').replace('×', '*').replace('÷', '/'), local_dict=local_dict, transformations=TRANSFORMS)
+        
+        eq = Eq(lhs_expr, rhs_expr)
+        
+        ics_dict = {y(x0_sym): y0_sym} if x0_sym is not None else None
+        sol = dsolve(eq, y(x), ics=ics_dict)
+        
+        ode_classes = classify_ode(eq, y(x))
+        primary_class = ode_classes[0] if ode_classes else "1st Order ODE"
+        
+        sol_rhs = sol.rhs
+        
+        steps = [
+            f"Differential Equation: {format_sympy_res(lhs_expr)} = {format_sympy_res(rhs_expr)}",
+            f"Step 1: Classification: Identified as '{primary_class}' ordinary differential equation.",
+            f"Step 2: Apply standard integration method for {primary_class}."
+        ]
+        
+        if 'linear' in primary_class:
+            steps.append("Step 3: Put into standard linear form: dy/dx + P(x)·y = Q(x), determine integrating factor I(x) = exp(∫ P(x) dx).")
+            steps.append("Step 4: Multiply by integrating factor and integrate both sides.")
+        elif 'separable' in primary_class:
+            steps.append("Step 3: Separate variables: g(y) dy = f(x) dx and integrate both sides.")
+            
+        steps.append(f"Step 5: General Solution: y(x) = {format_sympy_res(sol_rhs)}")
+        
+        if ics_dict:
+            steps.append(f"Step 6: Apply initial condition y({x0_sym}) = {y0_sym} to uniquely determine constant C₁.")
+            steps.append(f"Step 7: Particular Solution: y(x) = {format_sympy_res(sol_rhs)}")
+            
+        return {
+            "title": f"Differential Equation Solution ({'Particular' if ics_dict else 'General'})",
+            "summary_value": f"y(x) = {format_sympy_res(sol_rhs)}",
+            "formula": "Standard 1st Order ODE: y' + P(x)y = Q(x) ⟹ y(x) = [∫ Q(x)·I(x) dx + C] ÷ I(x)",
+            "rows": [
+                ["Solution y(x)", f"y(x) = {format_sympy_res(sol_rhs)}"],
+                ["Original ODE", cleaned],
+                ["ODE Classification", primary_class],
+                ["Initial Condition", f"y({x0_sym}) = {y0_sym}" if ics_dict else "None (General Solution with C₁)"]
+            ],
+            "steps": steps,
+            "insights": "First-order differential equations relate an unknown function to its rate of change; initial conditions pin down the specific integral curve.",
+            "raw": None
+        }
+    except Exception:
+        return None

@@ -164,10 +164,10 @@ html,body{
 .brand{display:flex;align-items:center;gap:8px}
 .brand h1{margin:0;font-size:15px;font-weight:650;letter-spacing:-.3px}
 .brand em{font-style:normal;font-size:10px;font-weight:650;color:var(--acc);background:var(--field);padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
-.top-actions{display:flex;align-items:center;gap:6px}
+.top-actions{display:flex;align-items:center;gap:4px}
 .round{
-  width:32px;
-  height:32px;
+  width:28px;
+  height:28px;
   border-radius:50%;
   border:1px solid var(--line);
   background:var(--glass);
@@ -216,6 +216,37 @@ html,body{
   overflow:hidden
 }
 .wrap.sciOn .calc{width:100%}
+.calc::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(circle 140px at var(--mx,50%) var(--my,20%),var(--glass-specular) 0%,transparent 70%);
+  pointer-events:none;
+  opacity:.65;
+  transition:opacity .3s;
+  z-index:0;
+}
+.calc>*{position:relative;z-index:1}
+@media(max-width:330px){.brand em{display:none}}
+.copy-pill{
+  position:absolute;
+  top:8px;
+  right:12px;
+  background:var(--op-gradient);
+  color:#ffffff;
+  font-size:10.5px;
+  font-weight:700;
+  padding:2px 9px;
+  border-radius:999px;
+  box-shadow:0 3px 12px var(--op-glow);
+  opacity:0;
+  transform:translateY(6px) scale(.92);
+  transition:transform .24s var(--sp),opacity .2s;
+  pointer-events:none;
+  z-index:10;
+}
+.copy-pill.show{opacity:1;transform:translateY(0) scale(1)}
 
 /* Display & Live Expression View */
 .disp{
@@ -948,6 +979,8 @@ body::after{
       <em>v2.5 Pro</em>
     </div>
     <div class="top-actions">
+      <button class="round" id="soundBtn" aria-label="Toggle keyboard sound" title="Sound feedback (Mute/Unmute)">🔊</button>
+      <button class="round" id="accentBtn" aria-label="Cycle theme accent color" title="Cycle Accent Color">🎨</button>
       <button class="round" id="theme" aria-label="Switch light or dark theme" title="Toggle theme">◐</button>
     </div>
   </header>
@@ -967,6 +1000,7 @@ body::after{
         <div class="expr" id="expr" title="Live Expression View (Click to copy)"></div>
         <div class="res" id="res" title="Tap to copy result">0</div>
       </div>
+      <div class="copy-pill" id="copyPill">Copied! ✓</div>
       <div class="sciw" id="sciw">
         <div><div class="sci" id="sci"></div></div>
       </div>
@@ -1064,26 +1098,56 @@ const fm=n=>isFinite(n)?'₹'+(+n).toLocaleString('en-IN',{maximumFractionDigits
 const rw=n=>String(+n.toPrecision(12));
 
 let actx=null;
-function playClick(){
+let soundMuted=false;
+try{soundMuted=localStorage.getItem('cgpt-mute')==='1';}catch{}
+
+function playClick(type='num'){
+  if(soundMuted)return;
   try{
     if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
     if(actx.state==='suspended')actx.resume();
+    const now=actx.currentTime;
+    if(type==='eq'){
+      [523.25,659.25].forEach(freq=>{
+        const osc=actx.createOscillator(),g=actx.createGain();
+        osc.type='triangle';
+        osc.frequency.setValueAtTime(freq,now);
+        g.gain.setValueAtTime(0.04,now);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+0.16);
+        osc.connect(g);
+        g.connect(actx.destination);
+        osc.start(now);
+        osc.stop(now+0.17);
+      });
+      return;
+    }
     const osc=actx.createOscillator(),g=actx.createGain();
     osc.type='sine';
-    const now=actx.currentTime;
-    osc.frequency.setValueAtTime(1400,now);
-    osc.frequency.exponentialRampToValueAtTime(160,now+0.012);
-    g.gain.setValueAtTime(0.04,now);
-    g.gain.exponentialRampToValueAtTime(0.0001,now+0.012);
+    if(type==='op'){
+      osc.frequency.setValueAtTime(1700,now);
+      osc.frequency.exponentialRampToValueAtTime(280,now+0.012);
+      g.gain.setValueAtTime(0.04,now);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+0.012);
+    }else if(type==='clear'){
+      osc.frequency.setValueAtTime(420,now);
+      osc.frequency.exponentialRampToValueAtTime(80,now+0.014);
+      g.gain.setValueAtTime(0.045,now);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+0.014);
+    }else{
+      osc.frequency.setValueAtTime(1150,now);
+      osc.frequency.exponentialRampToValueAtTime(130,now+0.01);
+      g.gain.setValueAtTime(0.035,now);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+0.01);
+    }
     osc.connect(g);
     g.connect(actx.destination);
     osc.start(now);
-    osc.stop(now+0.013);
+    osc.stop(now+0.016);
   }catch{}
 }
 
-function haptic(ms=15){
-  playClick();
+function haptic(ms=15,type='num'){
+  playClick(type);
   if(navigator.vibrate)try{navigator.vibrate(ms)}catch{}
 }
 
@@ -2065,12 +2129,38 @@ function toast(m){
   clearTimeout(tt);
   tt=setTimeout(()=>t.classList.remove('on'),1600);
 }
-const copy=t=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copied to clipboard'),()=>toast('Copy unavailable'));
+function showCopyPill(msg='Copied! ✓'){
+  const p=$('#copyPill');
+  if(!p)return;
+  p.textContent=msg;
+  p.classList.add('show');
+  clearTimeout(p._t);
+  p._t=setTimeout(()=>p.classList.remove('show'),1200);
+}
+const copy=t=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{
+  showCopyPill('Copied! ✓');
+  haptic(15,'op');
+  toast('Copied to clipboard');
+},()=>toast('Copy unavailable'));
 
 const OPS='÷×−+^',FNS=['sin','cos','tan','log','ln'];
 
+let _eCache, _rCache, _mbCache, _tdCache, _opBtnsCache;
+function getCachedDom(){
+  if(!_eCache){
+    _eCache=$('#expr');
+    _rCache=$('#res');
+    _mbCache=$('#modeBadge');
+    _tdCache=$('#tDeg');
+    _opBtnsCache=Array.from($$('.op[data-k]'));
+  }
+  return {e:_eCache,r:_rCache,mb:_mbCache,td:_tdCache,ops:_opBtnsCache};
+}
+
+let _prevL=-1;
 function render(){
-  const e=$('#expr'),r=$('#res'),p=calc(expr);
+  const {e,r,mb,td,ops}=getCachedDom();
+  const p=calc(expr);
   e.textContent=eq?prev:expr;
   e.scrollLeft=e.scrollWidth;
   const nt=p==null?'0':fmt(p);
@@ -2081,13 +2171,16 @@ function render(){
   }
   r.textContent=nt;
 
-  const L=r.textContent.length;
-  r.style.fontSize=(L>16?16:L>13?20:L>10?26:L>8?32:L>6?38:44)+'px';
+  const L=nt.length;
+  if(L!==_prevL){
+    _prevL=L;
+    r.style.fontSize=(L>16?16:L>13?20:L>10?26:L>8?32:L>6?38:44)+'px';
+  }
 
   const last=expr.slice(-1);
-  $$('.op[data-k]').forEach(b=>b.classList.toggle('on',!eq&&b.dataset.k===last));
-  $('#modeBadge').textContent=deg?'DEG':'RAD';
-  $('#tDeg').textContent=deg?'DEG':'RAD';
+  if(ops)ops.forEach(b=>b.classList.toggle('on',!eq&&b.dataset.k===last));
+  if(mb)mb.textContent=deg?'DEG':'RAD';
+  if(td)td.textContent=deg?'DEG':'RAD';
 }
 
 function press(k){
@@ -2201,9 +2294,11 @@ $('#modeBadge').onclick=()=>{
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-k]');
   if(b){
-    press(b.dataset.k);
+    const k=b.dataset.k;
+    press(k);
     ripple(b,e);
-    haptic(15);
+    const type=k==='='?'eq':(OPS.includes(k)?'op':(['AC','⌫'].includes(k)?'clear':'num'));
+    haptic(15,type);
     return;
   }
   const c=e.target.closest('.copyable');
@@ -2228,6 +2323,9 @@ addEventListener('keydown',e=>{
     }).catch(()=>{});
     return;
   }
+
+  if(e.key==='m'||e.key==='M'){$('#soundBtn')?.click();return;}
+  if(e.key==='a'||e.key==='A'){$('#accentBtn')?.click();return;}
 
   const M={
     '*':'×','/':'÷','-':'−',
@@ -2264,8 +2362,57 @@ $('#theme').onclick=e=>{
   e.currentTarget.style.transform=`rotate(${rot}deg)`;
   const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
   applyTheme(cur==='dark'?'light':'dark');
-  haptic(15);
+  haptic(15,'op');
 };
+
+/* Sound Mute Toggle */
+function updateSoundBtn(){
+  const b=$('#soundBtn');
+  if(!b)return;
+  b.textContent=soundMuted?'🔇':'🔊';
+  b.title=soundMuted?'Sound muted (Click to unmute)':'Sound active (Click to mute)';
+}
+updateSoundBtn();
+
+const sBtn=$('#soundBtn');
+if(sBtn){
+  sBtn.onclick=()=>{
+    soundMuted=!soundMuted;
+    try{localStorage.setItem('cgpt-mute',soundMuted?'1':'0');}catch{}
+    updateSoundBtn();
+    if(!soundMuted)haptic(15,'op');
+    toast(soundMuted?'Sound Muted':'Sound Enabled');
+  };
+}
+
+/* Quick Accent Color Cycler */
+const ACCENT_CYCLE=['orange','cyan','emerald','purple','rose'];
+const aBtn=$('#accentBtn');
+if(aBtn){
+  aBtn.onclick=()=>{
+    const cur=document.documentElement.dataset.accent||'orange';
+    const next=ACCENT_CYCLE[(ACCENT_CYCLE.indexOf(cur)+1)%ACCENT_CYCLE.length];
+    applyAccent(next);
+    haptic(15,'op');
+    toast(`Accent: ${next.charAt(0).toUpperCase()+next.slice(1)}`);
+  };
+}
+
+/* Apple VisionOS Specular Glare Pointer Tracker */
+const calcCard=$('.calc');
+if(calcCard){
+  calcCard.addEventListener('pointermove',e=>{
+    const r=calcCard.getBoundingClientRect();
+    const x=((e.clientX-r.left)/r.width)*100;
+    const y=((e.clientY-r.top)/r.height)*100;
+    calcCard.style.setProperty('--mx',`${x.toFixed(1)}%`);
+    calcCard.style.setProperty('--my',`${y.toFixed(1)}%`);
+  });
+  calcCard.addEventListener('pointerleave',()=>{
+    calcCard.style.setProperty('--mx','50%');
+    calcCard.style.setProperty('--my','20%');
+  });
+}
 
 /* Multiple Accent Themes (Persistent) */
 function applyAccent(col){
@@ -2489,15 +2636,16 @@ function ripple(b,e){
     cv.width=W*dpr;
     cv.height=H*dpr;
     c.scale(dpr,dpr);
-    P=Array.from({length:Math.min(75,Math.floor(W*H/17000))},()=>({
+    // Optimized particle allocation: 16-24 particles maximum for zero frame drops
+    P=Array.from({length:Math.min(24,Math.max(12,Math.floor(W*H/26000)))},()=>({
       x:Math.random()*W,
       y:Math.random()*H,
-      vx:(Math.random()-.5)*.28,
-      vy:(Math.random()-.5)*.28,
-      r:Math.random()*1.3+.6
+      vx:(Math.random()-.5)*.24,
+      vy:(Math.random()-.5)*.24,
+      r:Math.random()*1.2+.5
     }));
   };
-  addEventListener('resize',rs);
+  addEventListener('resize',rs,{passive:true});
   rs();
 
   (function loop(){
@@ -2507,29 +2655,39 @@ function ripple(b,e){
         curRy+=(targetRy-curRy)*0.1;
         cd.style.transform=`rotateY(${curRy.toFixed(2)}deg) rotateX(${curRx.toFixed(2)}deg)`;
       }
-      if(n++%30===0)col=getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#fff';
+      if(n++%45===0)col=getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#fff';
       c.clearRect(0,0,W,H);
       c.fillStyle=c.strokeStyle=col;
 
-      for(const p of P){
+      for(let i=0;i<P.length;i++){
+        const p=P[i];
         p.x+=p.vx;p.y+=p.vy;
         if(p.x<0||p.x>W)p.vx*=-1;
         if(p.y<0||p.y>H)p.vy*=-1;
-        const dx=p.x-mx,dy=p.y-my,d=Math.hypot(dx,dy);
-        if(d<120&&d>0){p.x+=dx/d*.8;p.y+=dy/d*.8;}
-        c.globalAlpha=.45;
+        const dx=p.x-mx,dy=p.y-my,d2=dx*dx+dy*dy;
+        if(d2<14400&&d2>0){const d=Math.sqrt(d2);p.x+=dx/d*.7;p.y+=dy/d*.7;}
+        c.globalAlpha=.42;
         c.beginPath();
         c.arc(p.x,p.y,p.r,0,6.283);
         c.fill();
       }
+
+      // Fast squared-distance early-exit connection algorithm
       for(let i=0;i<P.length;i++){
+        const p1=P[i];
         for(let j=i+1;j<P.length;j++){
-          const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);
-          if(d<110){
-            c.globalAlpha=(1-d/110)*.18;
+          const p2=P[j];
+          const dx=p1.x-p2.x;
+          if(dx>85||dx<-85)continue;
+          const dy=p1.y-p2.y;
+          if(dy>85||dy<-85)continue;
+          const dist2=dx*dx+dy*dy;
+          if(dist2<7225){
+            const d=Math.sqrt(dist2);
+            c.globalAlpha=(1-d/85)*.15;
             c.beginPath();
-            c.moveTo(P[i].x,P[i].y);
-            c.lineTo(P[j].x,P[j].y);
+            c.moveTo(p1.x,p1.y);
+            c.lineTo(p2.x,p2.y);
             c.stroke();
           }
         }
