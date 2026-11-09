@@ -169,9 +169,9 @@ def main():
         title="Calculator GPT",
         url=url,
         js_api=api,
-        width=348,
-        height=570,
-        min_size=(315, 490),
+        width=350,
+        height=580,
+        min_size=(320, 500),
         background_color='#05060b',
         text_select=True
     )
