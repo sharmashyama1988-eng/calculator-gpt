@@ -1,0 +1,19 @@
+{
+  "name": "Calculator GPT — Smart Calculator",
+  "short_name": "Calculator GPT",
+  "description": "Smart Calculator with Apple VisionOS Glassmorphism, Offline Mathematical CAS Engine, and Financial Tools",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05060b",
+  "theme_color": "#05060b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
