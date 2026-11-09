@@ -15,8 +15,8 @@ import webview
 from engine.master_solver import process_all_queries, solve_query
 from engine.llm_engine import preload_llm_async
 
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-    BASE_DIR = sys._MEIPASS
+if getattr(sys, 'frozen', False):
+    BASE_DIR = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -4,6 +4,7 @@ Provides natural language reasoning, conceptual explanations, and mathematical g
 """
 
 import os
+import sys
 import re
 import threading
 from typing import Dict, Any, Optional
@@ -37,15 +38,25 @@ def get_llm():
         if _MODEL_INSTANCE is not None:
             return _MODEL_INSTANCE
         
-        # Check model path
-        model_path = DEFAULT_MODEL_PATH
-        if not os.path.exists(model_path):
-            alt_path = os.path.join(os.getcwd(), "models", "smollm2-135m-instruct-q4_k_m.gguf")
-            if os.path.exists(alt_path):
-                model_path = alt_path
-            else:
-                _MODEL_LOAD_FAILED = True
-                return None
+        # Resolve model path across standalone script, frozen onedir, or onefile
+        candidates = []
+        if getattr(sys, 'frozen', False):
+            if hasattr(sys, '_MEIPASS'):
+                candidates.append(os.path.join(sys._MEIPASS, "models", "smollm2-135m-instruct-q4_k_m.gguf"))
+            candidates.append(os.path.join(os.path.dirname(sys.executable), "models", "smollm2-135m-instruct-q4_k_m.gguf"))
+        candidates.append(DEFAULT_MODEL_PATH)
+        candidates.append(os.path.join(os.getcwd(), "models", "smollm2-135m-instruct-q4_k_m.gguf"))
+
+        model_path = None
+        for p in candidates:
+            if os.path.exists(p):
+                model_path = p
+                break
+
+        if not model_path:
+            print("[!] Warning: SmolLM2-135M model file not found in any candidate path.")
+            _MODEL_LOAD_FAILED = True
+            return None
 
         try:
             from llama_cpp import Llama

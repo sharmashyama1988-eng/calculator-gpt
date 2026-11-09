@@ -55,3 +55,8 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# MSIX & Logs
+msix source/
+*.log
+
